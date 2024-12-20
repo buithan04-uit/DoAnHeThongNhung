@@ -29,6 +29,8 @@
 #include "touch.h"
 #include "cJSON.h"
 #include "stdlib.h"
+#include "stdbool.h"
+#include "DHT.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,11 +41,14 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define min(a,b) (((a)<(b))?(a):(b))
-#define BUFFER_SIZE 2048 // Adjust buffer size as needed
-char rxBuffer[BUFFER_SIZE];
-char uart_rx_byte;
-uint8_t uart_index;
-uint8_t recording;
+
+#define UART_RX_BUFFER_SIZE 1024
+#define UART_BUFFER_SIZE 2048
+
+// Buffer để lưu dữ liệu nhận từ ESP
+uint8_t uart_rx_buffer[UART_BUFFER_SIZE];
+char rec;
+volatile uint16_t uart_rx_index = 0; // Vị trí ghi hiện tại
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,6 +58,8 @@ uint8_t recording;
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi2;
+
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
 
@@ -68,17 +75,22 @@ static void MX_GPIO_Init(void);
 static void MX_FSMC_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_SPI2_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 void processWeather(const char *jsonString);
 void UART_ReceiveString(UART_HandleTypeDef *huart, char *buffer, int buffer_size);
 void Send_AT_Commands(UART_HandleTypeDef *huart);
+void Send_AT_Command(UART_HandleTypeDef *huart, const char *command, uint32_t timeout);
 
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+float temperature = 1;
+float humidity = 1;
+volatile bool readDHT = false;
 int *temp_max = {0};
 int *temp_min = {0};
 int *wind_speed = {0};
@@ -87,7 +99,7 @@ char day_name[7][4];
 char Date[7][6];
 char Time[30];
 char date[30];
-char jsonString[BUFFER_SIZE] = "{\"latitude\":10.875,\"longitude\":106.75,\"generationtime_ms\":0.105977058410645,\"utc_offset_seconds\":25200,\"timezone\":\"Asia/Bangkok\",\"timezone_abbreviation\":\"+07\",\"elevation\":31,\"current_units\":{\"time\":\"iso8601\",\"interval\":\"seconds\",\"temperature_2m\":\"°C\",\"relative_humidity_2m\":\"%\"},\"current\":{\"time\":\"2024-11-27T09:45\",\"interval\":900,\"temperature_2m\":28.5,\"relative_humidity_2m\":71},\"daily_units\":{\"time\":\"iso8601\",\"weather_code\":\"wmo code\",\"apparent_temperature_max\":\"°C\",\"apparent_temperature_min\":\"°C\",\"wind_speed_10m_max\":\"km/h\"},\"daily\":{\"time\":[\"2024-11-27\",\"2024-11-28\",\"2024-11-29\",\"2024-11-30\",\"2024-12-01\",\"2024-12-02\",\"2024-12-03\"],\"weather_code\":[3,80,3,3,45,3,3],\"apparent_temperature_max\":[37.2,37.9,32.7,34.2,37.1,36.6,38.9],\"apparent_temperature_min\":[28.3,28.1,26.5,25.1,29.5,29.6,31],\"wind_speed_10m_max\":[5.6,7.9,8.8,6.4,8.7,8.4,11.3]}}";
+char jsonString[UART_BUFFER_SIZE] = "{\"latitude\":10.875,\"longitude\":106.75,\"generationtime_ms\":0.105977058410645,\"utc_offset_seconds\":25200,\"timezone\":\"Asia/Bangkok\",\"timezone_abbreviation\":\"+07\",\"elevation\":31,\"current_units\":{\"time\":\"iso8601\",\"interval\":\"seconds\",\"temperature_2m\":\"°C\",\"relative_humidity_2m\":\"%\"},\"current\":{\"time\":\"2024-11-27T09:45\",\"interval\":900,\"temperature_2m\":28.5,\"relative_humidity_2m\":71},\"daily_units\":{\"time\":\"iso8601\",\"weather_code\":\"wmo code\",\"apparent_temperature_max\":\"°C\",\"apparent_temperature_min\":\"°C\",\"wind_speed_10m_max\":\"km/h\"},\"daily\":{\"time\":[\"2024-11-27\",\"2024-11-28\",\"2024-11-29\",\"2024-11-30\",\"2024-12-01\",\"2024-12-02\",\"2024-12-03\"],\"weather_code\":[3,80,3,3,45,3,3],\"apparent_temperature_max\":[37.2,37.9,32.7,34.2,37.1,36.6,38.9],\"apparent_temperature_min\":[28.3,28.1,26.5,25.1,29.5,29.6,31],\"wind_speed_10m_max\":[5.6,7.9,8.8,6.4,8.7,8.4,11.3]}}";
 /* USER CODE END 0 */
 
 /**
@@ -122,20 +134,29 @@ int main(void)
   MX_FSMC_Init();
   MX_USART1_UART_Init();
   MX_SPI2_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   LCD_BL_ON();
+  HAL_TIM_Base_Start_IT(&htim2);
   TouchCalibrate();
 
   lcdInit();
   int i = 0;
   lcdSetOrientation(i%4);
   lcdFillRGB(COLOR_BLACK);
-
+  Send_AT_Commands(&huart1);
+  //Screen0();
+  //HAL_Delay(10000);
 
   int current = 1;
   bool updated = true;
   int16_t tx , ty;
   processWeather(jsonString);
+
+
+
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -143,9 +164,16 @@ int main(void)
   while (1)
   {
 
+	  if (readDHT && current == 1)
+	  {
+		  readDHT = false; // Xóa cờ
+		  DHT_ReadData(&temperature, &humidity);
+		  TextSensor(5, 245, temperature, humidity);
+	  }
+
 	  if (current == 1){
 		  if (updated == true){
-			  Screen1();
+			  Screen1(temp_max[0] , temp_min[0]);
 			  HAL_Delay(1000);
 			  updated = false;
 		  }
@@ -171,6 +199,7 @@ int main(void)
 			  }
 		  }
 	  }
+
 
     /* USER CODE END WHILE */
 
@@ -259,6 +288,51 @@ static void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 15999;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 8399;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -388,47 +462,62 @@ static void MX_FSMC_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// Hàm xử lý ngắt của bộ định thời
 
+
+// Hàm callback khi ngắt xảy ra
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM2)
+    {
+    	 readDHT = true; // Đặt cờ để báo hiệu cần đọc dữ liệu
+    }
+}
+void Send_AT_Command(UART_HandleTypeDef *huart, const char *command, uint32_t timeout) {
+    // Gửi lệnh qua UART
+    HAL_UART_Transmit(huart, (uint8_t *)command, strlen(command), HAL_MAX_DELAY);
+
+    // Chờ phản hồi từ ESP
+    memset(uart_rx_buffer, 0, UART_BUFFER_SIZE); // Xóa buffer
+    HAL_UART_Receive(huart, uart_rx_buffer, UART_BUFFER_SIZE, timeout);
+
+    // Hiển thị phản hồi lên màn hình
+    lcdFillRGB(COLOR_BLACK);
+    lcdSetCursor(0,0);
+    lcdPrintf("ESP: %s\n", uart_rx_buffer);
+}
 
 void Send_AT_Commands(UART_HandleTypeDef *huart) {
-    uint8_t at_command[] = "AT\r\n";
-    uint8_t at_command1[] = "AT+CWMODE=3\r\n";
-    uint8_t at_command2[] = "AT+CWJAP=\"RedmiTurbo3\",\"88888888\"\r\n";
-    uint8_t at_command3[] = "AT+CIPSTART=\"TCP\",\"api.open-meteo.com\",80\r\n";
-    uint8_t at_command4[] = "AT+CIPSEND=248\r\n";
-    uint8_t at_command5[] = "GET /v1/forecast?latitude=10.870035&longitude=106.803706&current=temperature_2m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FSingapore HTTP/1.1 \r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n";
+    // Gửi từng lệnh AT và xử lý phản hồi
+    Send_AT_Command(huart, "AT\r\n", 3000);
+    Send_AT_Command(huart, "AT+CWMODE=3\r\n", 3000);
+    Send_AT_Command(huart, "AT+CWJAP=\"RedmiTurbo3\",\"88888888\"\r\n", 9000);
+    Send_AT_Command(huart, "AT+CIPSTART=\"TCP\",\"api.open-meteo.com\",80\r\n", 3000);
+    Send_AT_Command(huart, "AT+CIPSEND=267\r\n", 3000);
 
-    // Send each command and wait for a response
-    HAL_UART_Transmit(huart, at_command, strlen((char *)at_command), HAL_MAX_DELAY);
-    HAL_Delay(3000); // Wait for 3 seconds
+    // Gửi yêu cầu GET cuối cùng
+    Send_AT_Command(huart, "GET /v1/forecast?latitude=21.0285&longitude=105.8542&current=temperature_2m,relative_humidity_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FBangkok HTTP/1.1\r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n", 5000);
 
-    HAL_UART_Transmit(huart, at_command1, strlen((char *)at_command1), HAL_MAX_DELAY);
-    HAL_Delay(3000); // Wait for 3 seconds
-
-    HAL_UART_Transmit(huart, at_command2, strlen((char *)at_command2), HAL_MAX_DELAY);
-    HAL_Delay(9000); // Wait for 9 seconds
-
-    HAL_UART_Transmit(huart, at_command3, strlen((char *)at_command3), HAL_MAX_DELAY);
-    HAL_Delay(3000); // Wait for 3 seconds
-
-    HAL_UART_Transmit(huart, at_command4, strlen((char *)at_command4), HAL_MAX_DELAY);
-    HAL_Delay(3000); // Wait for 3 seconds
-
-    // Send the final command and receive the response
-    HAL_UART_Transmit(huart, at_command5, strlen((char *)at_command5), HAL_MAX_DELAY);
-
-
-
-
+    lcdFillRGB(COLOR_BLACK);
+        lcdSetCursor(0,0);
+    lcdPrintf("ESP: %s\n", uart_rx_buffer);
+    HAL_Delay(10000);
 }
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance == USART1) {
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART1) { // Kiểm tra UART đúng
+        // Xử lý dữ liệu nhận được ở đây
+
+        // Tiếp tục nhận dữ liệu
+        HAL_UART_Receive_IT(huart, uart_rx_buffer, UART_BUFFER_SIZE);
     }
 }
 
+
+
+
 void processWeather(const char *jsonString) {
-    // Parse chuỗi JSON
+    // Parse JSON string
     cJSON *json = cJSON_Parse(jsonString);
     if (json == NULL) {
         lcdSetCursor(10, 10);
@@ -437,55 +526,67 @@ void processWeather(const char *jsonString) {
         return;
     }
 
-    // Lấy thông tin dự báo hàng ngày
-    	cJSON *daily = cJSON_GetObjectItem(json, "daily");
-    	if (!daily) {
-    	        lcdSetCursor(10, 10);
-    	        lcdSetTextColor(COLOR_RED, COLOR_BLACK);
-    	        lcdPrintf("Error: Missing 'daily' object!");
-    	        cJSON_Delete(json);
-    	        return;
-    	    }
-    	cJSON *dates = cJSON_GetObjectItem(daily, "time");
-        cJSON *temp_max_json = cJSON_GetObjectItem(daily, "apparent_temperature_max");
-        cJSON *temp_min_json = cJSON_GetObjectItem(daily, "apparent_temperature_min");
-        cJSON *weather_code = cJSON_GetObjectItem(daily, "weather_code");
-        cJSON *wind_speed_json = cJSON_GetObjectItem(daily, "wind_speed_10m_max");
-    // Cấp phát bộ nhớ cho các biến toàn cục
+    // Get daily forecast information
+    cJSON *daily = cJSON_GetObjectItem(json, "daily");
+    if (!daily) {
+        lcdSetCursor(10, 10);
+        lcdSetTextColor(COLOR_RED, COLOR_BLACK);
+        lcdPrintf("Error: Missing 'daily' object!");
+        cJSON_Delete(json);
+        return;
+    }
+
+    cJSON *dates = cJSON_GetObjectItem(daily, "time");
+    cJSON *temp_max_json = cJSON_GetObjectItem(daily, "temperature_2m_max");
+    cJSON *temp_min_json = cJSON_GetObjectItem(daily, "temperature_2m_min");
+    cJSON *weather_code = cJSON_GetObjectItem(daily, "weather_code");
+    cJSON *wind_speed_json = cJSON_GetObjectItem(daily, "wind_speed_10m_max");
+
+    // Allocate memory for global variables
     int num_days = cJSON_GetArraySize(dates);
-        temp_max = (int *)malloc(num_days * sizeof(int));
-        temp_min = (int *)malloc(num_days * sizeof(int));
-        wind_speed = (int *)malloc(num_days * sizeof(int));
-        day_code = (int *)malloc(num_days * sizeof(int));
+    temp_max = (int *)malloc(num_days * sizeof(int));
+    temp_min = (int *)malloc(num_days * sizeof(int));
+    wind_speed = (int *)malloc(num_days * sizeof(int));
+    day_code = (int *)malloc(num_days * sizeof(int));
+    if (!temp_max || !temp_min || !wind_speed || !day_code) {
+        lcdSetCursor(10, 10);
+        lcdSetTextColor(COLOR_RED, COLOR_BLACK);
+        lcdPrintf("Error allocating memory!");
+        cJSON_Delete(json);
+        return;
+    }
 
-            // Chuyển đổi ngày từ chuỗi thành tên ngày (ví dụ: "Mon")
-        for (int i = 0; i < num_days; i++) {
-        		char *date = cJSON_GetArrayItem(dates, i)->valuestring;
-        		temp_max[i] = (int)cJSON_GetArrayItem(temp_max_json, i)->valuedouble;
-        		temp_min[i] = (int)cJSON_GetArrayItem(temp_min_json, i)->valuedouble;
-        		wind_speed[i] = (int)cJSON_GetArrayItem(wind_speed_json, i)->valuedouble;
-        		day_code[i] = cJSON_GetArrayItem(weather_code, i)->valueint;
+    // Convert dates and extract weather data
+    for (int i = 0; i < num_days; i++) {
+        char *date = cJSON_GetArrayItem(dates, i)->valuestring;
+        temp_max[i] = (int)cJSON_GetArrayItem(temp_max_json, i)->valuedouble;
+        temp_min[i] = (int)cJSON_GetArrayItem(temp_min_json, i)->valuedouble;
+        wind_speed[i] = (int)cJSON_GetArrayItem(wind_speed_json, i)->valuedouble;
+        day_code[i] = cJSON_GetArrayItem(weather_code, i)->valueint;
 
-        		// Extract month and day from date string
-				int year, month, days;
-				char tmp[6];
-				sscanf(date, "%d-%d-%d", &year, &month, &days);
-				sprintf(tmp, "%02d-%02d", days, month);
-				strncat(Date[i], tmp, sizeof(Date[i]) - strlen(Date[i]) - 1);
-        		char day[4];
-				switch ((i + 2) % 7) {
-					case 0: sprintf(day, "Sun"); break;
-					case 1: sprintf(day, "Mon"); break;
-					case 2: sprintf(day, "Tue"); break;
-					case 3: sprintf(day, "Wed"); break;
-					case 4: sprintf(day, "Thu"); break;
-					case 5: sprintf(day, "Fri"); break;
-					case 6: sprintf(day, "Sat"); break;
-					default: break;
-				}
-				strncat(day_name[i], day, sizeof(day_name[i]) - strlen(day_name[i]) - 1);
+        // Extract month and day from date string
+        int year, month, days;
+        char tmp[6];
+        sscanf(date, "%d-%d-%d", &year, &month, &days);
+        snprintf(tmp, sizeof(tmp), "%02d-%02d", days, month);
+        strncat(Date[i], tmp, sizeof(Date[i]) - strlen(Date[i]) - 1);
+
+        // Convert day index to day name
+        char day[4];
+        switch ((i + 2) % 7) {
+            case 0: snprintf(day, sizeof(day), "Sun"); break;
+            case 1: snprintf(day, sizeof(day), "Mon"); break;
+            case 2: snprintf(day, sizeof(day), "Tue"); break;
+            case 3: snprintf(day, sizeof(day), "Wed"); break;
+            case 4: snprintf(day, sizeof(day), "Thu"); break;
+            case 5: snprintf(day, sizeof(day), "Fri"); break;
+            case 6: snprintf(day, sizeof(day), "Sat"); break;
+            default: break;
         }
-    // D�?n dẹp bộ nhớ
+        strncat(day_name[i], day, sizeof(day_name[i]) - strlen(day_name[i]) - 1);
+    }
+
+    // Clean up memory
     cJSON_Delete(json);
 }
 /* USER CODE END 4 */

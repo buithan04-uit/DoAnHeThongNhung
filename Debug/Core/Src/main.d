@@ -27,11 +27,13 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/ili9341.h ../Core/Inc/main.h ../Core/Inc/colors.h \
  ../Core/Inc/registers.h ../Core/Inc/fonts.h ../Core/Inc/image.h \
- ../Core/Inc/front_end.h ../Core/Inc/ili9341.h ../Core/Inc/touch.h \
- ../Core/Inc/cJSON.h
+ ../Core/Inc/front_end.h ../Core/Inc/ili9341.h ../Core/Inc/DHT.h \
+ ../Core/Inc/touch.h ../Core/Inc/cJSON.h ../Core/Inc/DHT.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -61,6 +63,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/ili9341.h:
 ../Core/Inc/main.h:
@@ -70,5 +74,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/image.h:
 ../Core/Inc/front_end.h:
 ../Core/Inc/ili9341.h:
+../Core/Inc/DHT.h:
 ../Core/Inc/touch.h:
 ../Core/Inc/cJSON.h:
+../Core/Inc/DHT.h:

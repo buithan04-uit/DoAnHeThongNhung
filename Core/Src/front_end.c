@@ -623,10 +623,8 @@ void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, u
     lcdDrawCircle(x + length / 3, y , radius - 1 , COLOR_WHITE);
 }
 
-void WeatherDay (int x , int y ){
+void WeatherDay (int x , int y , int TempMax , int TempMin){
 	int rate = 8;
-	int temperatureMin = -12;
-	int temperatureMax = -10;
 
 	  lcdSetCursor(x + 5, y + 20);
 	  lcdSetTextFont(&Font16);
@@ -653,31 +651,31 @@ void WeatherDay (int x , int y ){
 	  lcdSetTextFont(&Font16);
 	  lcdPrintf("Now");
 	  lcdSetCursor(x + 93, y + 20);
-	  if (10 <= temperatureMin)
+	  if (10 <= TempMin)
 	  {
 		lcdSetCursor(x + 93, y + 20);
-		lcdPrintf("%d" , temperatureMin);
+		lcdPrintf("%d" , TempMin);
 		lcdDrawCircle( x + 121 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 121 , y + 19 , 2, COLOR_WHITE);
 	  }
-	  else if ( 0 <  temperatureMin)
+	  else if ( 0 <  TempMin)
 	  {
 		lcdSetCursor(x + 104, y + 20);
-		lcdPrintf("%d" , temperatureMin);
+		lcdPrintf("%d" , TempMin);
 		lcdDrawCircle( x + 121 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 121 , y + 19 , 2, COLOR_WHITE);
 	  }
-	  else if (-10 < temperatureMin )
+	  else if (-10 < TempMin )
 	  {
 		lcdSetCursor(x + 93, y + 20);
-		lcdPrintf("%d" , temperatureMin);
+		lcdPrintf("%d" , TempMin);
 		lcdDrawCircle( x + 121 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 121 , y + 19 , 2, COLOR_WHITE);
 	  }
 	  else
 	  {
 		lcdSetCursor(x + 82, y + 20);
-		lcdPrintf("%d" , temperatureMin);
+		lcdPrintf("%d" , TempMin);
 		lcdDrawCircle( x + 121 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 121 , y + 19 , 2, COLOR_WHITE);
 	  }
@@ -685,34 +683,50 @@ void WeatherDay (int x , int y ){
 	  DrawGradientLine(x + 133, y + 25 , 50 , 6 ,  COLOR_ORANGE , COLOR_RED);
 
 	  lcdSetCursor(x + 188, y + 20);
-	  if (10 < temperatureMax)
+	  if (10 < TempMax)
 	  {
 		lcdSetCursor(x + 191, y + 20);
-		lcdPrintf("%d" , temperatureMax);
+		lcdPrintf("%d" , TempMax);
 		lcdDrawCircle( x + 218 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 218 , y + 19 , 2, COLOR_WHITE);
 	  }
-	  else if ( 0 <  temperatureMax)
+	  else if ( 0 <  TempMax)
 	  {
 		lcdSetCursor(x + 191, y + 20);
-		lcdPrintf("%d" , temperatureMax);
+		lcdPrintf("%d" , TempMax);
 		lcdDrawCircle( x + 207 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 207 , y + 19 , 2, COLOR_WHITE);
 	  }
-	  else if (-10 < temperatureMax )
+	  else if (-10 < TempMax )
 	  {
 		lcdSetCursor(x + 191, y + 20);
-		lcdPrintf("%d" , temperatureMax);
+		lcdPrintf("%d" , TempMax);
 		lcdDrawCircle( x + 218 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 218 , y + 19 , 2, COLOR_WHITE);
 	  }
 	  else
 	  {
 		lcdSetCursor(x + 191, y + 20);
-		lcdPrintf("%d" , temperatureMax);
+		lcdPrintf("%d" , TempMax);
 		lcdDrawCircle( x + 229 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 229 , y + 19 , 2, COLOR_WHITE);
 	  }
+}
+void DrawGauge(int16_t centerX, int16_t centerY, int16_t radius) {
+    // Vẽ cung tròn các đoạn màu
+    lcdDrawThickArc(centerX, centerY, radius, 120, 180, 10, COLOR_GREEN);  // Đoạn xanh
+    lcdDrawThickArc(centerX, centerY, radius, 180, 240, 10, COLOR_ORANGE); // Đoạn vàng
+    lcdDrawThickArc(centerX, centerY, radius, 240, 300, 10, COLOR_RED);    // Đoạn đỏ
+
+    // Vẽ kim chỉ báo
+    int16_t needleAngle = 210; // Góc kim (giữa đoạn vàng)
+    int16_t needleLength = radius - 10;
+    int16_t x1 = centerX + (needleLength * cosf(needleAngle * M_PI / 180.0));
+    int16_t y1 = centerY - (needleLength * sinf(needleAngle * M_PI / 180.0));
+    lcdDrawLine(centerX, centerY, x1, y1, COLOR_WHITE);
+
+    // Vẽ vòng tròn trung tâm
+    lcdDrawCircle(centerX, centerY, 5, COLOR_WHITE);
 }
 
 void DrawThermometer(int x, int y, int height, int width, int fillHeight, uint16_t borderColor, uint16_t fillColor) {
@@ -832,11 +846,15 @@ void TextLocation(int x , int y)
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
 	lcdPrintf("Location: TP Ho Chi Minh");
 }
-void TextSensor(int x , int y){
+void TextSensor(int x , int y ,float temperature ,float humidity ){
 	lcdSetCursor(x + 40, y);
 	lcdSetTextFont(&Font16);
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
 	lcdPrintf("Sensor");
+	lcdSetCursor(x + 12, y + 55);
+	lcdPrintf("%d C", (int)temperature);
+	lcdSetCursor(x + 90, y + 55);
+	lcdPrintf("%d%%", (int)humidity);
 }
 void DrawIconHot (int x, int y){
 	  lcdDrawImage(x, y, &bmhot);
@@ -849,6 +867,15 @@ void DrawIconTree (int x, int y){
 }
 void DrawIconWater (int x, int y){
 	  lcdDrawImage(x, y, &bmwater);
+}
+void DrawIconClockTem(int x , int y){
+	lcdDrawImage(x, y, &bmclocktem);
+}
+void DrawIconClockHumi(int x , int y){
+	lcdDrawImage(x, y, &bmclockhumi);
+}
+void DrawIconNext(int x , int y){
+	lcdDrawImage(x, y, &bmnext);
 }
 void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] , int day_code , char date[]){
 	  lcdSetCursor(x + 7 , y - 6);
@@ -911,10 +938,23 @@ void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] 
 //		  lcdDrawCircle(x + 215, y + 10, 2, COLOR_WHITE);
 	  }
 }
-void Screen1(){
-	int temperatre = 23;
+
+void Screen0(){
+	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
+	lcdDrawImage(60, 100, &bmLoading);
+}
+void Screen1(int TempMax , int TempMin){
+	float temperature;
+	float humidity;
+
+
+
 	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
 	// Divide layout
+
+	lcdDrawRoundRect(199, 25, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
+	DrawIconNext(202, 28);
+
 	lcdDrawRoundRect(76, 70, 163, 110, 6, COLOR_THEME_SKYBLUE_SHADOW);
 
 	lcdDrawRoundRect(1, 70, 73, 110, 6, COLOR_THEME_SKYBLUE_SHADOW);
@@ -924,32 +964,52 @@ void Screen1(){
 
 
 	lcdDrawRoundRect(1, 240, 150, 78, 6, COLOR_THEME_SKYBLUE_SHADOW);
+	lcdDrawLine(1 , 262 , 150 , 262 , COLOR_BLACK);
+
+	lcdDrawLine(76, 262, 76, 317, COLOR_BLACK);
 
 	lcdDrawRoundRect(155, 240, 84, 78, 6, COLOR_THEME_SKYBLUE_SHADOW);
+
+
+	// Doc du lieu tu sensor
+	DHT_ReadData(&temperature, &humidity);
+
+	// Cac text va icon ban dau
 	TextTitle( 22 , 2);
 	TextTime(5, 25);
 	TextDate(5, 40);
 	TextLocation(5, 55);
-	TextSensor(5, 245);
 	DrawCloud (3 , 80);
 
-
+	// Ve icon nhiet do va hien thi nhiet do
 	DrawThermometer(95, 80 , 40, 12, 25, COLOR_BLACK, COLOR_RED);
-	TextTemperature16(120, 95, temperatre);
-	if (temperatre >= 29){
+	TextTemperature16(120, 95, (int)temperature);
+
+	if (temperature >= 29){
 	  DrawIconHot(205 , 85);
 	}
-	else if ( temperatre < 20){
+	else if ( temperature < 20){
 	  DrawIconIce(205 , 85);
 	}
 	else {
 	  DrawIconTree(205 , 85);
 	}
 
-	WeatherDay(0, 190 );
-	DrawIconHumidyti1(77, 130);
-	TextHumidyti16 (140, 146 , 12);
+
+	// Ve icon do am va hien thi do am
 	DrawIconWater(205 , 138);
+	TextHumidyti16 (140, 146 , (int)humidity);
+	DrawIconHumidyti1(77, 130);
+
+	// Hien thi nhiet do max min trong ngay
+	WeatherDay(0, 190 , TempMax , TempMin );
+
+	// Hien thi sensor
+	TextSensor(5, 245 , temperature , humidity);
+	DrawIconClockTem(14 , 265);
+	DrawIconClockHumi(88, 265);
+
+
 
 }
 

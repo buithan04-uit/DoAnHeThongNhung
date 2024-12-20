@@ -10,6 +10,7 @@
 
 #include "ili9341.h"
 #include "math.h"
+#include "DHT.h"
 
 void demoLCD(int i);
 unsigned long testFillScreen();
@@ -26,20 +27,21 @@ unsigned long testRoundRects();
 unsigned long testFilledRoundRects();
 unsigned long testDrawImage();
 
-void Screen1();
+void Screen0();
+void Screen1(int TempMax , int TempMin);
 void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][4] , int Wind_speed[] , char date[][6]);
 
 
 void TextTitle(int16_t x, int16_t y);
 void TableMain (int16_t x, int16_t y ,int temperature , int huminity );
-void WeatherDay (int x , int y );
+void WeatherDay (int x , int y , int TempMax , int TempMin);
 void TextTemperature16 (int x , int y , int temperature);
 void TextHumidyti16 (int x , int y , int humidyti);
 void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] , int day_code , char date[]);
 void TextTime(int x , int y);
 void TextDate(int x , int y);
 void TextLocation(int x , int y);
-void TextSensor(int x , int y);
+void TextSensor(int x , int y ,float temperature ,float humidity );
 
 //Draw Icon
 void DrawIconHumidyti1 (int x, int y);
@@ -51,6 +53,9 @@ void DrawIconHot (int x, int y);
 void DrawIconIce (int x, int y);
 void DrawIconTree (int x, int y);
 void DrawIconWater (int x, int y);
+void DrawIconClockTem(int x , int y);
+void DrawIconClockHumi(int x , int y);
+void DrawIconNext(int x , int y);
 
 void CloudRain (int x, int y);
 void CloudSun (int x, int y);
@@ -62,7 +67,7 @@ void lcdDrawThickArc(int x0, int y0, int r, int start_angle, int end_angle, int 
 void DrawClock (int x0, int y0, int r, int start_angle, int end_angle, int thickness);
 void DrawCloud(int x , int y);
 
-
+void DrawGauge(int16_t centerX, int16_t centerY, int16_t radius);
 void DrawThermometer(int x, int y, int height, int width, int fillHeight, uint16_t borderColor, uint16_t fillColor);
 void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, uint16_t colorStart, uint16_t colorEnd);
 uint16_t interpolateColor(uint16_t color1, uint16_t color2, float ratio);

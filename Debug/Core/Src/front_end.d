@@ -28,9 +28,11 @@ Core/Src/front_end.o: ../Core/Src/front_end.c ../Core/Inc/front_end.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/colors.h ../Core/Inc/registers.h ../Core/Inc/fonts.h \
- ../Core/Inc/image.h
+ ../Core/Inc/image.h ../Core/Inc/DHT.h
 ../Core/Inc/front_end.h:
 ../Core/Inc/ili9341.h:
 ../Core/Inc/main.h:
@@ -62,8 +64,11 @@ Core/Src/front_end.o: ../Core/Src/front_end.c ../Core/Inc/front_end.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/colors.h:
 ../Core/Inc/registers.h:
 ../Core/Inc/fonts.h:
 ../Core/Inc/image.h:
+../Core/Inc/DHT.h:
