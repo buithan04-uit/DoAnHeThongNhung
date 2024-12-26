@@ -44,11 +44,8 @@
 
 #define UART_RX_BUFFER_SIZE 1024
 #define UART_BUFFER_SIZE 2048
-
-// Buffer để lưu dữ liệu nhận từ ESP
 uint8_t uart_rx_buffer[UART_BUFFER_SIZE];
-char rec;
-volatile uint16_t uart_rx_index = 0; // Vị trí ghi hiện tại
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,6 +57,7 @@ volatile uint16_t uart_rx_index = 0; // Vị trí ghi hiện tại
 SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
 
@@ -76,30 +74,51 @@ static void MX_FSMC_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-void processWeather(const char *jsonString);
+void processWeather(char *jsonString);
 void UART_ReceiveString(UART_HandleTypeDef *huart, char *buffer, int buffer_size);
 void Send_AT_Commands(UART_HandleTypeDef *huart);
-void Send_AT_Command(UART_HandleTypeDef *huart, const char *command, uint32_t timeout);
+void Resend_AT_Commands(UART_HandleTypeDef *huart);
+void Send_AT_Command(UART_HandleTypeDef *huart, const char *command, uint32_t timeout );
 
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int count = 0;
 float temperature = 1;
 float humidity = 1;
 volatile bool readDHT = false;
+volatile bool Recall = false;
 int *temp_max = {0};
 int *temp_min = {0};
 int *wind_speed = {0};
 int *day_code = {0};
 char day_name[7][4];
 char Date[7][6];
-char Time[30];
-char date[30];
-char jsonString[UART_BUFFER_SIZE] = "{\"latitude\":10.875,\"longitude\":106.75,\"generationtime_ms\":0.105977058410645,\"utc_offset_seconds\":25200,\"timezone\":\"Asia/Bangkok\",\"timezone_abbreviation\":\"+07\",\"elevation\":31,\"current_units\":{\"time\":\"iso8601\",\"interval\":\"seconds\",\"temperature_2m\":\"°C\",\"relative_humidity_2m\":\"%\"},\"current\":{\"time\":\"2024-11-27T09:45\",\"interval\":900,\"temperature_2m\":28.5,\"relative_humidity_2m\":71},\"daily_units\":{\"time\":\"iso8601\",\"weather_code\":\"wmo code\",\"apparent_temperature_max\":\"°C\",\"apparent_temperature_min\":\"°C\",\"wind_speed_10m_max\":\"km/h\"},\"daily\":{\"time\":[\"2024-11-27\",\"2024-11-28\",\"2024-11-29\",\"2024-11-30\",\"2024-12-01\",\"2024-12-02\",\"2024-12-03\"],\"weather_code\":[3,80,3,3,45,3,3],\"apparent_temperature_max\":[37.2,37.9,32.7,34.2,37.1,36.6,38.9],\"apparent_temperature_min\":[28.3,28.1,26.5,25.1,29.5,29.6,31],\"wind_speed_10m_max\":[5.6,7.9,8.8,6.4,8.7,8.4,11.3]}}";
+char current_time[6];
+char current_date[11];
+int current_temp;
+int current_humi;
+int current_code;
+int current_cloud;
+int choice = 1;
+int choiceTmp = 1;
+// AT Commands
+uint8_t ATCommand1[UART_BUFFER_SIZE] = "GET /v1/forecast?latitude=10.7769&longitude=106.7009&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FBangkok HTTP/1.1\r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n";
+
+uint8_t ATCommand2[UART_BUFFER_SIZE] = "GET /v1/forecast?latitude=21.0285&longitude=105.8542&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FBangkok HTTP/1.1\r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n";
+
+uint8_t ATCommand3[UART_BUFFER_SIZE] = "GET /v1/forecast?latitude=20.8449&longitude=106.6881&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FBangkok HTTP/1.1\r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n";
+
+uint8_t ATCommand4[UART_BUFFER_SIZE] = "GET /v1/forecast?latitude=10.0452&longitude=105.7469&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FBangkok HTTP/1.1\r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n";
+
+uint8_t ATCommand5[UART_BUFFER_SIZE] = "GET /v1/forecast?latitude=16.0471&longitude=108.2068&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FBangkok HTTP/1.1\r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n";
+
+uint8_t jsonString[UART_BUFFER_SIZE] = "wind_speed \r\n: 394/r/n/r/n{\"latitude\":10.75,\"longitude\":106.75,\"generationtime_ms\":0.07295608520507812,\"utc_offset_seconds\":25200,\"timezone\":\"Asia/Bangkok\",\"timezone_abbreviation\":\"+07\",\"elevation\":12.0,\"current_units\":{\"time\":\"iso8601\",\"interval\":\"seconds\",\"temperature_2m\":\"Â°C\",\"relative_humidity_2m\":\"%\",\"weather_code\":\"wmo code\",\"cloud_cover\":\"%\"},\"current\":{\"time\":\"2024-12-20T10:45\",\"interval\":900,\"temperature_2m\":27.4,\"relative_humidity_2m\":66,\"weather_code\":3,\"cloud_cover\":100},\"daily_units\":{\"time\":\"iso8601\",\"weather_code\":\"wmo code\",\"temperature_2m_max\":\"Â°C\",\"temperature_2m_min\":\"Â°C\",\"wind_speed_10m_max\":\"km/h\"},\"daily\":{\"time\":[\"2024-12-20\",\"2024-12-21\",\"2024-12-22\",\"2024-12-23\",\"2024-12-24\",\"2024-12-25\",\"2024-12-26\"],\"weather_code\":[3,45,3,3,80,3,95],\"temperature_2m_max\":[30.1,29.6,30.0,30.1,27.7,27.0,28.7],\"temperature_2m_min\":[21.7,22.7,23.1,21.0,23.9,24.1,24.2],\"wind_speed_10m_max\":[9.2,8.6,5.9,9.3,9.7,14.2,4.7]}}7yfbhajfasdasd/r/n/dwa2ewadawd";
 /* USER CODE END 0 */
 
 /**
@@ -135,6 +154,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI2_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   LCD_BL_ON();
   HAL_TIM_Base_Start_IT(&htim2);
@@ -142,19 +162,16 @@ int main(void)
 
   lcdInit();
   int i = 0;
+
   lcdSetOrientation(i%4);
   lcdFillRGB(COLOR_BLACK);
+
   Send_AT_Commands(&huart1);
-  //Screen0();
-  //HAL_Delay(10000);
 
   int current = 1;
   bool updated = true;
   int16_t tx , ty;
-  processWeather(jsonString);
-
-
-
+  processWeather(uart_rx_buffer);
 
 
   /* USER CODE END 2 */
@@ -166,22 +183,35 @@ int main(void)
 
 	  if (readDHT && current == 1)
 	  {
-		  readDHT = false; // Xóa cờ
+		  readDHT = false; // Xóa c�?
 		  DHT_ReadData(&temperature, &humidity);
 		  TextSensor(5, 245, temperature, humidity);
+	  }
+	  if(choice != choiceTmp && current == 1){
+		  Recall = true;
+		  choiceTmp = choice;
 	  }
 
 	  if (current == 1){
 		  if (updated == true){
-			  Screen1(temp_max[0] , temp_min[0]);
+			  Screen1(temp_max[0] , temp_min[0] , current_temp ,  current_humi , current_code ,current_cloud ,current_time ,current_date ,choice);
 			  HAL_Delay(1000);
 			  updated = false;
 		  }
 		  if (TouchGetCalibratedPoint(&tx, &ty)){
-			  if (tx >= 180 && tx <= 230 && ty >= 10 && ty <= 100){
+			  lcdDrawCircle(tx, ty, 2, COLOR_BLUE);
+			  if (tx >= 199 && tx <= 239 && ty >= 25 && ty <= 65){
 				  current = 2;
 				  updated = true;
-				  HAL_Delay(100);
+				  HAL_Delay(200);
+			  }
+		  }
+		  if (TouchGetCalibratedPoint(&tx, &ty)){
+			  lcdDrawCircle(tx, ty, 2, COLOR_BLUE);
+			  if (tx >= 158 && tx <= 198 && ty >= 25 && ty <= 65){
+				  current = 3;
+				  updated = true;
+				  HAL_Delay(200);
 			  }
 		  }
 	  }
@@ -198,6 +228,202 @@ int main(void)
 				  HAL_Delay(100);
 			  }
 		  }
+	  }
+	  else if (current == 3){
+		  if (updated == true){
+			  Screen3(choice);
+			  HAL_Delay(1000);
+			  updated = false;
+			  choiceTmp=choice;
+		  }
+		  if (TouchGetCalibratedPoint(&tx, &ty)){
+			  if (tx >= 180 && tx <= 230 && ty >= 10 && ty <= 100){
+				  current = 1;
+				  updated = true;
+				  HAL_Delay(100);
+			  }
+		  }
+		  if (TouchGetCalibratedPoint(&tx, &ty)){
+			  if (tx >= 20 && tx <= 220 && ty >= 50 && ty <= 85){
+				  choice = 1;
+				  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_GREEN);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 60);
+				  lcdPrintf("TP.HCM");
+				  //
+				  lcdFillRoundRect(20,100, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 110);
+				  lcdPrintf("Ha Noi");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,150, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 160);
+				  lcdPrintf("Hai Phong");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,200, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 210);
+				  lcdPrintf("Can Tho");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,250, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 260);
+				  lcdPrintf("Da Nang");
+				  HAL_Delay(200);
+			  }
+			  if (tx >= 20 && tx <= 220 && ty >= 100 && ty <= 135){
+				  choice = 2;
+				  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 60);
+				  lcdPrintf("TP.HCM");
+				  //
+				  lcdFillRoundRect(20,100, 200, 35, 6, COLOR_GREEN);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 110);
+				  lcdPrintf("Ha Noi");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,150, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 160);
+				  lcdPrintf("Hai Phong");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,200, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 210);
+				  lcdPrintf("Can Tho");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,250, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 260);
+				  lcdPrintf("Da Nang");
+				  HAL_Delay(200);
+			  }
+			  if (tx >= 20 && tx <= 220 && ty >= 150 && ty <= 185){
+				  choice = 3;
+				  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 60);
+				  lcdPrintf("TP.HCM");
+				  //
+				  lcdFillRoundRect(20,100, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 110);
+				  lcdPrintf("Ha Noi");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+				  lcdFillRoundRect(20,150, 200, 35, 6, COLOR_GREEN);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 160);
+				  lcdPrintf("Hai Phong");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,200, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 210);
+				  lcdPrintf("Can Tho");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,250, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 260);
+				  lcdPrintf("Da Nang");
+				  HAL_Delay(200);
+			  			  }
+			  if (tx >= 20 && tx <= 220 && ty >= 200 && ty <= 235){
+				  choice = 4;
+				  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 60);
+				  lcdPrintf("TP.HCM");
+				  //
+				  lcdFillRoundRect(20,100, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 110);
+				  lcdPrintf("Ha Noi");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,150, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 160);
+				  lcdPrintf("Hai Phong");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+				  lcdFillRoundRect(20,200, 200, 35, 6, COLOR_GREEN);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 210);
+				  lcdPrintf("Can Tho");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,250, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 260);
+				  lcdPrintf("Da Nang");
+				  HAL_Delay(200);
+			  			  }
+			  if (tx >= 20 && tx <= 220 && ty >= 250 && ty <= 285){
+				  choice = 5;
+				  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 60);
+				  lcdPrintf("TP.HCM");
+				  //
+				  lcdFillRoundRect(20,100, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 110);
+				  lcdPrintf("Ha Noi");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,150, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 160);
+				  lcdPrintf("Hai Phong");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+				  lcdFillRoundRect(20,200, 200, 35, 6, COLOR_LIGHTGREY);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 210);
+				  lcdPrintf("Can Tho");
+				  //
+				  lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+				  lcdFillRoundRect(20,250, 200, 35, 6, COLOR_GREEN);
+				  lcdSetTextFont(&Font20);
+				  lcdSetCursor(25, 260);
+				  lcdPrintf("Da Nang");
+				  HAL_Delay(200);
+			  }
+		  }
+	  }
+	  if(Recall){
+		  Resend_AT_Commands(&huart1);
+		  processWeather(uart_rx_buffer);
+		  if (current == 1){
+			  Screen1(temp_max[0] , temp_min[0] , current_temp ,  current_humi , current_code ,current_cloud ,current_time ,current_date , choice);
+		  }
+		  if (current == 2){
+			  Screen2(temp_max, temp_min, day_code, day_name, wind_speed, Date);
+		  }
+		  if (current == 3){
+			  Screen3(choice);
+		  }
+		  Recall = false;
 	  }
 
 
@@ -310,9 +536,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 15999;
+  htim2.Init.Prescaler = 8499;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 8399;
+  htim2.Init.Period = 9999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -333,6 +559,51 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
@@ -462,7 +733,7 @@ static void MX_FSMC_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-// Hàm xử lý ngắt của bộ định thời
+// Hàm xử lý ngắt của bộ định th�?i
 
 
 // Hàm callback khi ngắt xảy ra
@@ -470,38 +741,81 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM2)
     {
-    	 readDHT = true; // Đặt cờ để báo hiệu cần đọc dữ liệu
+    	count++;
+    	if (count % 5 == 0){
+        	readDHT = true; // �?ặt c�? để báo hiệu cần đ�?c dữ liệu
+		}
+    	if (count == 300){
+    		//call API
+    		Recall = true;
+    		count = 0;
+    	}
     }
 }
 void Send_AT_Command(UART_HandleTypeDef *huart, const char *command, uint32_t timeout) {
     // Gửi lệnh qua UART
+
     HAL_UART_Transmit(huart, (uint8_t *)command, strlen(command), HAL_MAX_DELAY);
 
-    // Chờ phản hồi từ ESP
+    // Ch�? phản hồi từ ESP
     memset(uart_rx_buffer, 0, UART_BUFFER_SIZE); // Xóa buffer
     HAL_UART_Receive(huart, uart_rx_buffer, UART_BUFFER_SIZE, timeout);
 
     // Hiển thị phản hồi lên màn hình
-    lcdFillRGB(COLOR_BLACK);
-    lcdSetCursor(0,0);
+    lcdSetCursor(5,250);
+    Screen0();
+    lcdSetTextColor(COLOR_BLACK, COLOR_THEME_SKYBLUE_BASE);
+    lcdSetTextFont(&Font16);
     lcdPrintf("ESP: %s\n", uart_rx_buffer);
 }
 
 void Send_AT_Commands(UART_HandleTypeDef *huart) {
     // Gửi từng lệnh AT và xử lý phản hồi
-    Send_AT_Command(huart, "AT\r\n", 3000);
-    Send_AT_Command(huart, "AT+CWMODE=3\r\n", 3000);
-    Send_AT_Command(huart, "AT+CWJAP=\"RedmiTurbo3\",\"88888888\"\r\n", 9000);
-    Send_AT_Command(huart, "AT+CIPSTART=\"TCP\",\"api.open-meteo.com\",80\r\n", 3000);
-    Send_AT_Command(huart, "AT+CIPSEND=267\r\n", 3000);
+
+    Send_AT_Command(huart, "AT\r\n", 3000 );
+    Send_AT_Command(huart, "AT+CWMODE=3\r\n", 3000 );
+    Send_AT_Command(huart, "AT+CWJAP=\"RedmiTurbo3\",\"88888888\"\r\n", 9000 );
+    Send_AT_Command(huart, "AT+CIPSTART=\"TCP\",\"api.open-meteo.com\",80\r\n", 3000 );
+    Send_AT_Command(huart, "AT+CIPSEND=279\r\n", 3000);
 
     // Gửi yêu cầu GET cuối cùng
-    Send_AT_Command(huart, "GET /v1/forecast?latitude=21.0285&longitude=105.8542&current=temperature_2m,relative_humidity_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Asia%2FBangkok HTTP/1.1\r\nHost: api.open-meteo.com\r\nConnection: close\r\n\r\n", 5000);
+    if (choice == 1){
+    	Send_AT_Command(huart, ATCommand1, 5000);
+    }
+    else if(choice == 2){
+    	Send_AT_Command(huart, ATCommand2, 5000);
+    }
+    else if(choice == 3){
+		Send_AT_Command(huart, ATCommand3, 5000);
+	}
+    else if(choice == 4){
+		Send_AT_Command(huart, ATCommand4, 5000);
+	}
+    else if(choice == 5){
+		Send_AT_Command(huart, ATCommand5, 5000);
+	}
 
-    lcdFillRGB(COLOR_BLACK);
-        lcdSetCursor(0,0);
-    lcdPrintf("ESP: %s\n", uart_rx_buffer);
-    HAL_Delay(10000);
+}
+void Resend_AT_Commands(UART_HandleTypeDef *huart){
+	Send_AT_Command(huart, "AT+CIPSTART=\"TCP\",\"api.open-meteo.com\",80\r\n", 3000 );
+	Send_AT_Command(huart, "AT+CIPSEND=279\r\n", 3000);
+
+	// Gửi yêu cầu GET cuối cùng
+	if (choice == 1){
+		Send_AT_Command(huart, ATCommand1, 5000);
+	}
+	else if(choice == 2){
+		Send_AT_Command(huart, ATCommand2, 5000);
+	}
+	else if(choice == 3){
+		Send_AT_Command(huart, ATCommand3, 5000);
+	}
+	else if(choice == 4){
+		Send_AT_Command(huart, ATCommand4, 5000);
+	}
+	else if(choice == 5){
+		Send_AT_Command(huart, ATCommand5, 5000);
+	}
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
@@ -512,13 +826,29 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         HAL_UART_Receive_IT(huart, uart_rx_buffer, UART_BUFFER_SIZE);
     }
 }
+char* extractJsonObject(const char *jsonString) {
+    const char *start = strstr(jsonString, "\"current\":{\"t");
+    const char *end = strrchr(jsonString, '}');
+    if (start && end && end > start) {
+        size_t length = end - start + 1;
+        char *result = (char *)malloc(length + 2); // Allocate extra space for the '{' character
+        if (result) {
+            result[0] = '{'; // Add '{' at the beginning
+            strncpy(result + 1, start, length); // Copy the rest of the string
+            result[length + 1] = '\0'; // Null-terminate the string
+            return result;
+        }
+    }
+    return NULL;
+}
 
 
+void processWeather( char *jsonString) {
 
+	jsonString = extractJsonObject(jsonString);
 
-void processWeather(const char *jsonString) {
-    // Parse JSON string
     cJSON *json = cJSON_Parse(jsonString);
+
     if (json == NULL) {
         lcdSetCursor(10, 10);
         lcdSetTextColor(COLOR_RED, COLOR_BLACK);
@@ -528,6 +858,7 @@ void processWeather(const char *jsonString) {
 
     // Get daily forecast information
     cJSON *daily = cJSON_GetObjectItem(json, "daily");
+    cJSON *current = cJSON_GetObjectItem(json, "current");
     if (!daily) {
         lcdSetCursor(10, 10);
         lcdSetTextColor(COLOR_RED, COLOR_BLACK);
@@ -541,6 +872,30 @@ void processWeather(const char *jsonString) {
     cJSON *temp_min_json = cJSON_GetObjectItem(daily, "temperature_2m_min");
     cJSON *weather_code = cJSON_GetObjectItem(daily, "weather_code");
     cJSON *wind_speed_json = cJSON_GetObjectItem(daily, "wind_speed_10m_max");
+
+    //"time":"2024-12-24T17:30","interval":900,"temperature_2m":26.0,"relative_humidity_2m":65,"weather_code":3,"cloud_cover":98};
+
+
+
+    char * Tmp =  cJSON_GetObjectItem(current , "time")->valuestring;
+    int year, month, day, hour , minute;
+	char  tmp[17];
+	sscanf(Tmp, "%d-%d-%dT%d:%d", &year, &month, &day , &hour ,&minute);
+	snprintf(tmp, sizeof(tmp), "%02d-%02d-%02d", day, month , year);
+	strncpy(current_date, tmp, sizeof(current_date) - 1);
+	current_date[sizeof(current_date) - 1] = '\0';
+
+	snprintf(tmp, sizeof(tmp), "%02d:%02d", hour, minute);
+	strncpy(current_time, tmp, sizeof(current_time) - 1);
+	current_time[sizeof(current_time) - 1] = '\0';
+
+    current_temp =  cJSON_GetObjectItem(current , "temperature_2m")->valueint;
+
+	current_humi =  cJSON_GetObjectItem(current , "relative_humidity_2m")->valueint;
+
+	current_code =  cJSON_GetObjectItem(current , "weather_code")->valueint;
+
+	current_cloud =  cJSON_GetObjectItem(current , "cloud_cover")->valueint;
 
     // Allocate memory for global variables
     int num_days = cJSON_GetArraySize(dates);

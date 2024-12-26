@@ -135,7 +135,7 @@ bool TouchGetCalibratedPoint(int16_t* x, int16_t* y)
 	uint16_t raw_y;
 
 	// get raw reading
-	if (GetPointRaw(&raw_x, &raw_y) == false)
+ 	if (GetPointRaw(&raw_x, &raw_y) == false)
 	{
 		return false;
 	}

@@ -57,5 +57,8 @@ extern GUI_CONST_STORAGE GUI_BITMAP bmclocktem;
 extern GUI_CONST_STORAGE GUI_BITMAP bmclockhumi;
 extern GUI_CONST_STORAGE GUI_BITMAP bmnext;
 extern GUI_CONST_STORAGE GUI_BITMAP bmLoading;
+extern GUI_CONST_STORAGE GUI_BITMAP bmcloudrate;
+extern GUI_CONST_STORAGE GUI_BITMAP bmnext1;
+extern GUI_CONST_STORAGE GUI_BITMAP bmlocation;
 
 #endif /* IMAGE_H_ */

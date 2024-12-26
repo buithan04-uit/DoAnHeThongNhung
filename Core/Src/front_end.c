@@ -601,7 +601,7 @@ uint16_t interpolateColor(uint16_t color1, uint16_t color2, float ratio) {
     return (r << 11) | (g << 5) | b;
 }
 
-void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, uint16_t colorStart, uint16_t colorEnd) {
+void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, uint16_t colorStart, uint16_t colorEnd , int Vitri) {
     // Radius for rounded ends, equal to half the thickness of the line
     int16_t radius = thickness / 2;
 
@@ -619,11 +619,11 @@ void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, u
     // Draw rounded ends as circles with colors matching the ends of the gradient
     lcdFillCircle(x, y  , radius - 1, colorStart);                 // Start of the line
     lcdFillCircle(x + length - 1, y , radius - 1, colorEnd);      // End of the line
-    lcdDrawCircle(x + length / 3, y , radius , COLOR_THEME_SKYBLUE_BASE);
-    lcdDrawCircle(x + length / 3, y , radius - 1 , COLOR_WHITE);
+    lcdDrawCircle(x + Vitri, y , radius , COLOR_THEME_SKYBLUE_BASE);
+    lcdDrawCircle(x + Vitri, y , radius - 1 , COLOR_WHITE);
 }
 
-void WeatherDay (int x , int y , int TempMax , int TempMin){
+void WeatherDay (int x , int y , int TempMax , int TempMin , int weather_code , int current_temp){
 	int rate = 8;
 
 	  lcdSetCursor(x + 5, y + 20);
@@ -679,8 +679,11 @@ void WeatherDay (int x , int y , int TempMax , int TempMin){
 		lcdDrawCircle( x + 121 , y + 19 , 3, COLOR_WHITE);
 		lcdDrawCircle( x + 121 , y + 19 , 2, COLOR_WHITE);
 	  }
+	  double Dolon = TempMax - TempMin;
+	  double Dolon1 = current_temp - TempMin;
+	  int Vitri = (Dolon1 / Dolon) * 50;
 
-	  DrawGradientLine(x + 133, y + 25 , 50 , 6 ,  COLOR_ORANGE , COLOR_RED);
+	  DrawGradientLine(x + 133, y + 25 , 50 , 6 ,  COLOR_ORANGE , COLOR_RED , Vitri);
 
 	  lcdSetCursor(x + 188, y + 20);
 	  if (10 < TempMax)
@@ -827,24 +830,38 @@ void TextHumidyti16 (int x , int y , int humidyti){
 		lcdDrawCircle( x + 41 , y + 15 , 2, COLOR_WHITE);
 	}
 }
-void TextTime(int x , int y){
+void TextTime(int x , int y , char * current_time){
 	lcdSetCursor(x, y);
 	lcdSetTextFont(&Font12);
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
-	lcdPrintf("Time: %d:%d:%d" , 15 , 24 , 47);
+	lcdPrintf("Time: %s" , current_time);
 }
-void TextDate(int x , int y){
+void TextDate(int x , int y , char * current_date){
 	lcdSetCursor(x, y);
 	lcdSetTextFont(&Font12);
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
-	lcdPrintf("Date: %d/%d/%d" , 21,12,2024);
+	lcdPrintf("Date: %s" , current_date);
 }
-void TextLocation(int x , int y)
+void TextLocation(int x , int y , int choice)
 {
 	lcdSetCursor(x, y);
 	lcdSetTextFont(&Font12);
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
-	lcdPrintf("Location: TP Ho Chi Minh");
+    if (choice == 1){
+    	lcdPrintf("City: Ho Chi Minh");
+    }
+    else if(choice == 2){
+    	lcdPrintf("City: Ha Noi");
+    }
+    else if(choice == 3){
+    	lcdPrintf("City: Hai Phong");
+	}
+    else if(choice == 4){
+    	lcdPrintf("City: Can Tho");
+	}
+    else if(choice == 5){
+    	lcdPrintf("City: Da Nang");
+	}
 }
 void TextSensor(int x , int y ,float temperature ,float humidity ){
 	lcdSetCursor(x + 40, y);
@@ -855,6 +872,19 @@ void TextSensor(int x , int y ,float temperature ,float humidity ){
 	lcdPrintf("%d C", (int)temperature);
 	lcdSetCursor(x + 90, y + 55);
 	lcdPrintf("%d%%", (int)humidity);
+}
+void TextCloudRate(int x , int y , int cloud_rate ){
+	lcdSetCursor(x + 10, y);
+	lcdSetTextFont(&Font16);
+	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
+	lcdPrintf("Cloud");
+	if (cloud_rate < 100){
+		lcdSetCursor(x + 22, y + 55);
+	}
+	else {
+		lcdSetCursor(x + 15, y + 55);
+	}
+	lcdPrintf("%d%%", cloud_rate);
 }
 void DrawIconHot (int x, int y){
 	  lcdDrawImage(x, y, &bmhot);
@@ -874,8 +904,17 @@ void DrawIconClockTem(int x , int y){
 void DrawIconClockHumi(int x , int y){
 	lcdDrawImage(x, y, &bmclockhumi);
 }
+void DrawIconCloudRate(int x , int y){
+	lcdDrawImage(x, y, &bmcloudrate);
+}
+void DrawIconLocation(int x , int y){
+	lcdDrawImage(x, y, &bmlocation);
+}
 void DrawIconNext(int x , int y){
 	lcdDrawImage(x, y, &bmnext);
+}
+void DrawIconNext1(int x , int y){
+	lcdDrawImage(x, y, &bmnext1);
 }
 void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] , int day_code , char date[]){
 	  lcdSetCursor(x + 7 , y - 6);
@@ -907,15 +946,25 @@ void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] 
 	  lcdDrawCircle(x + 163, y - 2, 2, COLOR_WHITE);
 	  lcdDrawCircle(x + 163, y - 2, 3, COLOR_WHITE);
 
-	  if ( day_code == 61)
-	  {
-		  CloudThunder (x + 51, y - 1);
+	  if (day_code <= 57){
+		  CloudSun(x + 51, y + 5);
 	  }
-	  else if (day_code == 50){
+	  else if (day_code <= 67) {
+		  //Rain
 		  CloudRain(x + 51 , y );
 	  }
+	  else if (day_code < 95){
+		  if (day_code ==80 || day_code == 81 || day_code == 82){
+			  //Rain
+			  CloudRain(x + 51 , y );
+		  }
+		  else{
+			  //Snow
+		  }
+	  }
 	  else{
-		  CloudSun(x + 51, y + 5);
+		  //Thunder
+		  CloudThunder (x + 51, y - 1);
 	  }
 
 	  if (wind >= 10){
@@ -943,17 +992,17 @@ void Screen0(){
 	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
 	lcdDrawImage(60, 100, &bmLoading);
 }
-void Screen1(int TempMax , int TempMin){
-	float temperature;
-	float humidity;
-
+void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , int current_code , int current_cloud , char * current_time , char * current_date , int choice){
 
 
 	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
 	// Divide layout
 
+	lcdDrawRoundRect(158, 25, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
+	DrawIconLocation(161, 28);
+
 	lcdDrawRoundRect(199, 25, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
-	DrawIconNext(202, 28);
+	DrawIconNext1(202, 28);
 
 	lcdDrawRoundRect(76, 70, 163, 110, 6, COLOR_THEME_SKYBLUE_SHADOW);
 
@@ -969,26 +1018,24 @@ void Screen1(int TempMax , int TempMin){
 	lcdDrawLine(76, 262, 76, 317, COLOR_BLACK);
 
 	lcdDrawRoundRect(155, 240, 84, 78, 6, COLOR_THEME_SKYBLUE_SHADOW);
+	lcdDrawLine(155 , 262 , 239 , 262 , COLOR_BLACK);
 
-
-	// Doc du lieu tu sensor
-	DHT_ReadData(&temperature, &humidity);
 
 	// Cac text va icon ban dau
 	TextTitle( 22 , 2);
-	TextTime(5, 25);
-	TextDate(5, 40);
-	TextLocation(5, 55);
+	TextTime(5, 25 , current_time);
+	TextDate(5, 40 , current_date);
+	TextLocation(5, 55 , choice);
 	DrawCloud (3 , 80);
 
 	// Ve icon nhiet do va hien thi nhiet do
 	DrawThermometer(95, 80 , 40, 12, 25, COLOR_BLACK, COLOR_RED);
-	TextTemperature16(120, 95, (int)temperature);
+	TextTemperature16(120, 95, current_temp);
 
-	if (temperature >= 29){
+	if (current_temp >= 29){
 	  DrawIconHot(205 , 85);
 	}
-	else if ( temperature < 20){
+	else if ( current_temp < 20){
 	  DrawIconIce(205 , 85);
 	}
 	else {
@@ -998,16 +1045,18 @@ void Screen1(int TempMax , int TempMin){
 
 	// Ve icon do am va hien thi do am
 	DrawIconWater(205 , 138);
-	TextHumidyti16 (140, 146 , (int)humidity);
+	TextHumidyti16 (140, 146 , current_humi);
 	DrawIconHumidyti1(77, 130);
 
 	// Hien thi nhiet do max min trong ngay
-	WeatherDay(0, 190 , TempMax , TempMin );
+	WeatherDay(0, 190 , TempMax , TempMin , current_code , current_temp);
 
 	// Hien thi sensor
-	TextSensor(5, 245 , temperature , humidity);
+	TextSensor(5, 245 , current_temp , current_humi);
+	TextCloudRate(159, 245, current_cloud);
 	DrawIconClockTem(14 , 265);
 	DrawIconClockHumi(88, 265);
+	DrawIconCloudRate(170, 265);
 
 
 
@@ -1018,34 +1067,111 @@ void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][
 	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
 	lcdSetTextFont(&Font20);
-	lcdSetCursor(15, 6);
-	lcdPrintf("7 Forecast Days");
+	lcdSetCursor(28, 6);
+	lcdPrintf("Forecast Days");
 
 
-	  DrawIconDate(5, 30);
-	  DrawIconWeather(55, 30);
-	  DrawIconTem(120, 30);
-	  DrawIconWind(195, 37);
+	  DrawIconDate(5, 65);
+	  DrawIconWeather(55, 65);
+	  DrawIconTem(120, 65);
+	  DrawIconWind(195, 72);
 
-	  lcdDrawLine(0, 0, 0, 319, COLOR_BLACK);
-	  lcdDrawLine(239, 0, 239, 319, COLOR_BLACK);
-	  lcdDrawLine(50, 30, 50, 319, COLOR_BLACK);
-	  lcdDrawLine(100, 30, 100, 319, COLOR_BLACK);
-	  lcdDrawLine(180, 30, 180, 319, COLOR_BLACK);
+	  lcdDrawLine(0, 65, 0, 319, COLOR_BLACK);
+	  lcdDrawLine(239, 65, 239, 319, COLOR_BLACK);
+	  lcdDrawLine(50, 65, 50, 319, COLOR_BLACK);
+	  lcdDrawLine(100, 65, 100, 319, COLOR_BLACK);
+	  lcdDrawLine(180, 65, 180, 319, COLOR_BLACK);
 
-	  lcdDrawLine(0, 30 , 239, 30  , COLOR_BLACK);
-	  lcdDrawLine(0, 73 , 239, 73  , COLOR_BLACK);
+	  lcdDrawLine(0, 65 , 239, 65  , COLOR_BLACK);
 	  lcdDrawLine(0, 108, 239, 108 , COLOR_BLACK);
 	  lcdDrawLine(0, 143, 239, 143 , COLOR_BLACK);
 	  lcdDrawLine(0, 178, 239, 178 , COLOR_BLACK);
 	  lcdDrawLine(0, 213, 239, 213 , COLOR_BLACK);
 	  lcdDrawLine(0, 248, 239, 248 , COLOR_BLACK);
 	  lcdDrawLine(0, 283, 239, 283 , COLOR_BLACK);
-	  for (int i = 0 ; i < 7 ; i++)
+	  for (int i = 1 ; i < 7 ; i++)
 	  {
 
 		  OneDay(7, 85 + i * 35, Min_temp[i]  , Max_temp[i] , Wind_speed[i] , day_name[i] , day_code[i] , date[i]);
 	  }
+}
+void Screen3(int choice)
+{
+	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
+	lcdSetTextFont(&Font24);
+	lcdSetCursor(35, 6);
+	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
+	lcdPrintf("Chose City");
+	lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,100, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,150, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,200, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,250, 200, 35, 6, COLOR_LIGHTGREY);
+
+	lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
+	lcdSetTextFont(&Font20);
+	lcdSetCursor(25, 60);
+	lcdPrintf("TP.HCM");
+
+
+
+	lcdSetTextFont(&Font20);
+	lcdSetCursor(25, 110);
+	lcdPrintf("Ha Noi");
+
+
+	lcdSetTextFont(&Font20);
+	lcdSetCursor(25, 160);
+	lcdPrintf("Hai Phong");
+
+
+	lcdSetTextFont(&Font20);
+	lcdSetCursor(25, 210);
+	lcdPrintf("Can Tho");
+
+	lcdSetTextFont(&Font20);
+	lcdSetCursor(25, 260);
+	lcdPrintf("Da Nang");
+
+	if(choice == 1){
+		lcdFillRoundRect(20,50, 200, 35, 6, COLOR_GREEN);
+		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+		lcdSetTextFont(&Font20);
+		lcdSetCursor(25, 60);
+		lcdPrintf("TP.HCM");
+
+	}
+	else if(choice == 2){
+		lcdFillRoundRect(20,100, 200, 35, 6, COLOR_GREEN);
+		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+		lcdSetTextFont(&Font20);
+		lcdSetCursor(25, 110);
+		lcdPrintf("Ha Noi");
+	}
+	else if(choice == 3){
+		lcdFillRoundRect(20,150, 200, 35, 6, COLOR_GREEN);
+		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+		lcdSetTextFont(&Font20);
+		lcdSetCursor(25, 160);
+		lcdPrintf("Hai Phong");
+	}
+	else if(choice == 4){
+		lcdFillRoundRect(20,200, 200, 35, 6, COLOR_GREEN);
+		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+		lcdSetTextFont(&Font20);
+		lcdSetCursor(25, 210);
+		lcdPrintf("Can Tho");
+	}
+	else if(choice == 5){
+		lcdFillRoundRect(20,250, 200, 35, 6, COLOR_GREEN);
+		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
+		lcdSetTextFont(&Font20);
+		lcdSetCursor(25, 260);
+		lcdPrintf("Da Nang");
+	}
+
+
+
 }
 
 

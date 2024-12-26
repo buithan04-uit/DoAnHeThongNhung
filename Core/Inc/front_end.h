@@ -28,20 +28,21 @@ unsigned long testFilledRoundRects();
 unsigned long testDrawImage();
 
 void Screen0();
-void Screen1(int TempMax , int TempMin);
+void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , int current_code , int current_cloud , char * current_time , char * current_date,int choice);
 void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][4] , int Wind_speed[] , char date[][6]);
-
+void Screen3(int choice);
 
 void TextTitle(int16_t x, int16_t y);
 void TableMain (int16_t x, int16_t y ,int temperature , int huminity );
-void WeatherDay (int x , int y , int TempMax , int TempMin);
+void WeatherDay (int x , int y , int TempMax , int TempMin , int weather_code , int current_temp);
 void TextTemperature16 (int x , int y , int temperature);
 void TextHumidyti16 (int x , int y , int humidyti);
 void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] , int day_code , char date[]);
-void TextTime(int x , int y);
-void TextDate(int x , int y);
-void TextLocation(int x , int y);
+void TextTime(int x , int y  , char * current_time);
+void TextDate(int x , int y  , char * current_date);
+void TextLocation(int x , int y , int choice);
 void TextSensor(int x , int y ,float temperature ,float humidity );
+void TextCloudRate(int x , int y , int cloud_rate );
 
 //Draw Icon
 void DrawIconHumidyti1 (int x, int y);
@@ -55,6 +56,8 @@ void DrawIconTree (int x, int y);
 void DrawIconWater (int x, int y);
 void DrawIconClockTem(int x , int y);
 void DrawIconClockHumi(int x , int y);
+void DrawIconCloudRate(int x , int y);
+void DrawIconLocation(int x , int y);
 void DrawIconNext(int x , int y);
 
 void CloudRain (int x, int y);
@@ -69,7 +72,7 @@ void DrawCloud(int x , int y);
 
 void DrawGauge(int16_t centerX, int16_t centerY, int16_t radius);
 void DrawThermometer(int x, int y, int height, int width, int fillHeight, uint16_t borderColor, uint16_t fillColor);
-void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, uint16_t colorStart, uint16_t colorEnd);
+void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, uint16_t colorStart, uint16_t colorEnd , int Vitri);
 uint16_t interpolateColor(uint16_t color1, uint16_t color2, float ratio);
 
 
