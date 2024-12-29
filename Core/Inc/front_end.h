@@ -29,7 +29,7 @@ unsigned long testDrawImage();
 
 void Screen0();
 void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , int current_code , int current_cloud , char * current_time , char * current_date,int choice);
-void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][4] , int Wind_speed[] , char date[][6]);
+void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][4] , int Wind_speed[] , char date [][6] , char * current_time , char * current_date , int choice);
 void Screen3(int choice);
 
 void TextTitle(int16_t x, int16_t y);
@@ -43,6 +43,7 @@ void TextDate(int x , int y  , char * current_date);
 void TextLocation(int x , int y , int choice);
 void TextSensor(int x , int y ,float temperature ,float humidity );
 void TextCloudRate(int x , int y , int cloud_rate );
+void TextUV(int x , int y , float UV );
 
 //Draw Icon
 void DrawIconHumidyti1 (int x, int y);
@@ -59,6 +60,10 @@ void DrawIconClockHumi(int x , int y);
 void DrawIconCloudRate(int x , int y);
 void DrawIconLocation(int x , int y);
 void DrawIconNext(int x , int y);
+void DrawIconNext1(int x , int y);
+void DrawIconBack(int x , int y);
+void DrawIconOk(int x , int y);
+void DrawBackGround(int x , int y);
 
 void CloudRain (int x, int y);
 void CloudSun (int x, int y);

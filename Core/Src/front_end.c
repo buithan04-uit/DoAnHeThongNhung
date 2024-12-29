@@ -630,7 +630,26 @@ void WeatherDay (int x , int y , int TempMax , int TempMin , int weather_code , 
 	  lcdSetTextFont(&Font16);
 	  lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
 
-	  CloudRain(x + 45, y + 10);
+	  if (weather_code <= 57){
+	  		  CloudSun(x + 45, y + 14);
+	  	  }
+	  	  else if (weather_code <= 67) {
+	  		  //Rain
+	  		  CloudRain(x + 45 , y + 10 );
+	  	  }
+	  	  else if (weather_code < 95){
+	  		  if (weather_code ==80 || weather_code == 81 || weather_code == 82){
+	  			  //Rain
+	  			  CloudRain(x + 45 , y + 10);
+	  		  }
+	  		  else{
+	  			  //Snow
+	  		  }
+	  	  }
+	  	  else{
+	  		  //Thunder
+	  		  CloudThunder (x + 45, y + 9);
+	  	  }
 	  lcdSetTextFont(&Font12);
 	  if (rate >= 10)
 	  {
@@ -886,6 +905,12 @@ void TextCloudRate(int x , int y , int cloud_rate ){
 	}
 	lcdPrintf("%d%%", cloud_rate);
 }
+void TextUV(int x , int y , float UV ){
+	lcdSetCursor(x , y);
+	lcdSetTextFont(&Font16);
+	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
+	lcdPrintf("UV: %.1f" , UV);
+}
 void DrawIconHot (int x, int y){
 	  lcdDrawImage(x, y, &bmhot);
 }
@@ -915,6 +940,15 @@ void DrawIconNext(int x , int y){
 }
 void DrawIconNext1(int x , int y){
 	lcdDrawImage(x, y, &bmnext1);
+}
+void DrawIconBack(int x , int y){
+	lcdDrawImage(x, y, &bmBack);
+}
+void DrawIconOk(int x , int y){
+	lcdDrawImage(x, y, &bmOK);
+}
+void DrawBackGround(int x , int y){
+	lcdDrawImage(x, y, &bmCity);
 }
 void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] , int day_code , char date[]){
 	  lcdSetCursor(x + 7 , y - 6);
@@ -1027,6 +1061,7 @@ void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , in
 	TextDate(5, 40 , current_date);
 	TextLocation(5, 55 , choice);
 	DrawCloud (3 , 80);
+	TextUV(5 , 160 , 1.2);
 
 	// Ve icon nhiet do va hien thi nhiet do
 	DrawThermometer(95, 80 , 40, 12, 25, COLOR_BLACK, COLOR_RED);
@@ -1062,13 +1097,21 @@ void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , in
 
 }
 
-void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][4] , int Wind_speed[] , char date [][6]){
+void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][4] , int Wind_speed[] , char date [][6] , char * current_time , char * current_date , int choice){
 
 	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
+
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
 	lcdSetTextFont(&Font20);
 	lcdSetCursor(28, 6);
 	lcdPrintf("Forecast Days");
+
+	//
+	lcdDrawRoundRect(199, 23, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
+	DrawIconBack(202, 26);
+	TextTime(5, 26 , current_time);
+	TextDate(5, 38 , current_date);
+	TextLocation(5, 50 , choice);
 
 
 	  DrawIconDate(5, 65);
@@ -1097,16 +1140,31 @@ void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][
 }
 void Screen3(int choice)
 {
-	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
+	DrawBackGround(0, 0);
 	lcdSetTextFont(&Font24);
-	lcdSetCursor(35, 6);
+	lcdFillRoundRect(35,3, 170, 27, 13  , COLOR_THEME_SKYBLUE_BASE);
+	lcdDrawRoundRect(35,3, 170, 28, 13  , COLOR_BLACK);
+	lcdSetCursor(52, 6);
+
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
-	lcdPrintf("Chose City");
+	lcdPrintf("Location");
+
+	//
+//	lcdFillRoundRect(199, 27, 40, 39, 5, COLOR_THEME_SKYBLUE_BASE);
+//	lcdDrawRoundRect(199, 27, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
+//	DrawIconOk(202, 30);
+
 	lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
-	lcdFillRoundRect(20,100, 200, 35, 6, COLOR_LIGHTGREY);
-	lcdFillRoundRect(20,150, 200, 35, 6, COLOR_LIGHTGREY);
-	lcdFillRoundRect(20,200, 200, 35, 6, COLOR_LIGHTGREY);
-	lcdFillRoundRect(20,250, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,95, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,140, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,185, 200, 35, 6, COLOR_LIGHTGREY);
+	lcdFillRoundRect(20,230, 200, 35, 6, COLOR_LIGHTGREY);
+
+	lcdDrawRoundRect(20,50, 200, 36, 6, COLOR_BLACK);
+	lcdDrawRoundRect(20,95, 200, 36, 6, COLOR_BLACK);
+	lcdDrawRoundRect(20,140, 200, 36, 6, COLOR_BLACK);
+	lcdDrawRoundRect(20,185, 200, 36, 6, COLOR_BLACK);
+	lcdDrawRoundRect(20,230, 200, 36, 6, COLOR_BLACK);
 
 	lcdSetTextColor(COLOR_WHITE, COLOR_LIGHTGREY);
 	lcdSetTextFont(&Font20);
@@ -1116,25 +1174,26 @@ void Screen3(int choice)
 
 
 	lcdSetTextFont(&Font20);
-	lcdSetCursor(25, 110);
+	lcdSetCursor(25, 105);
 	lcdPrintf("Ha Noi");
 
 
 	lcdSetTextFont(&Font20);
-	lcdSetCursor(25, 160);
+	lcdSetCursor(25, 150);
 	lcdPrintf("Hai Phong");
 
 
 	lcdSetTextFont(&Font20);
-	lcdSetCursor(25, 210);
+	lcdSetCursor(25, 195);
 	lcdPrintf("Can Tho");
 
 	lcdSetTextFont(&Font20);
-	lcdSetCursor(25, 260);
+	lcdSetCursor(25, 240);
 	lcdPrintf("Da Nang");
 
 	if(choice == 1){
 		lcdFillRoundRect(20,50, 200, 35, 6, COLOR_GREEN);
+		lcdDrawRoundRect(20,50, 200, 36, 6, COLOR_BLACK);
 		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
 		lcdSetTextFont(&Font20);
 		lcdSetCursor(25, 60);
@@ -1142,36 +1201,37 @@ void Screen3(int choice)
 
 	}
 	else if(choice == 2){
-		lcdFillRoundRect(20,100, 200, 35, 6, COLOR_GREEN);
+		lcdFillRoundRect(20,95, 200, 35, 6, COLOR_GREEN);
+		lcdDrawRoundRect(20,95, 200, 36, 6, COLOR_BLACK);
 		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
 		lcdSetTextFont(&Font20);
-		lcdSetCursor(25, 110);
+		lcdSetCursor(25, 105);
 		lcdPrintf("Ha Noi");
 	}
 	else if(choice == 3){
-		lcdFillRoundRect(20,150, 200, 35, 6, COLOR_GREEN);
+		lcdFillRoundRect(20,140, 200, 35, 6, COLOR_GREEN);
+		lcdDrawRoundRect(20,140, 200, 36, 6, COLOR_BLACK);
 		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
 		lcdSetTextFont(&Font20);
-		lcdSetCursor(25, 160);
+		lcdSetCursor(25, 150);
 		lcdPrintf("Hai Phong");
 	}
 	else if(choice == 4){
-		lcdFillRoundRect(20,200, 200, 35, 6, COLOR_GREEN);
+		lcdFillRoundRect(20,185, 200, 35, 6, COLOR_GREEN);
+		lcdDrawRoundRect(20,185, 200, 36, 6, COLOR_BLACK);
 		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
 		lcdSetTextFont(&Font20);
-		lcdSetCursor(25, 210);
+		lcdSetCursor(25, 195);
 		lcdPrintf("Can Tho");
 	}
 	else if(choice == 5){
-		lcdFillRoundRect(20,250, 200, 35, 6, COLOR_GREEN);
+		lcdFillRoundRect(20,230, 200, 35, 6, COLOR_GREEN);
+		lcdDrawRoundRect(20,230, 200, 36, 6, COLOR_BLACK);
 		lcdSetTextColor(COLOR_WHITE, COLOR_GREEN);
 		lcdSetTextFont(&Font20);
-		lcdSetCursor(25, 260);
+		lcdSetCursor(25, 240);
 		lcdPrintf("Da Nang");
 	}
-
-
-
 }
 
 

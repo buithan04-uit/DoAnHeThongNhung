@@ -31,7 +31,7 @@ static void goToInput(DHT_sensor *sensor) {
 }
 
 DHT_data DHT_getData(DHT_sensor *sensor) {
-	DHT_data data = {-128.0f, -128.0f};
+	DHT_data data = {0.0f, 0.0f};
 	
 	#if DHT_POLLING_CONTROL == 1
 	/* Ограничение по частоте опроса датчика */
