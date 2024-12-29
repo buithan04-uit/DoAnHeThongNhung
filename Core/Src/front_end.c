@@ -623,8 +623,8 @@ void DrawGradientLine(int16_t x, int16_t y, int16_t length, int16_t thickness, u
     lcdDrawCircle(x + Vitri, y , radius - 1 , COLOR_WHITE);
 }
 
-void WeatherDay (int x , int y , int TempMax , int TempMin , int weather_code , int current_temp){
-	int rate = 8;
+void WeatherDay (int x , int y , int TempMax , int TempMin , int weather_code , int current_temp ){
+	int rate = weather_code;
 
 	  lcdSetCursor(x + 5, y + 20);
 	  lcdSetTextFont(&Font16);
@@ -653,17 +653,13 @@ void WeatherDay (int x , int y , int TempMax , int TempMin , int weather_code , 
 	  lcdSetTextFont(&Font12);
 	  if (rate >= 10)
 	  {
-		  lcdSetCursor(x + 51, y + 32);
-		  lcdPrintf("%d/", rate);
-	      lcdDrawCircle(x + 67, y + 33 , 1 , COLOR_WHITE);
-		  lcdDrawCircle(x + 67, y + 40 , 1 , COLOR_WHITE);
+		  lcdSetCursor(x + 53, y + 32);
+		  lcdPrintf("%d", rate);
 
 	  }
 	  else{
-		  lcdSetCursor(x + 54, y + 32);
-		  lcdPrintf("%d/", rate);
-		  lcdDrawCircle(x + 63, y + 33 , 1 , COLOR_WHITE);
-		  lcdDrawCircle(x + 66, y + 40 , 1 , COLOR_WHITE);
+		  lcdSetCursor(x + 57, y + 32);
+		  lcdPrintf("%d", rate);
 	  }
 
 	  lcdSetCursor(x + 5, y + 20);
@@ -889,6 +885,14 @@ void TextSensor(int x , int y ,float temperature ,float humidity ){
 	lcdPrintf("Sensor");
 	lcdSetCursor(x + 12, y + 55);
 	lcdPrintf("%d C", (int)temperature);
+	if (temperature < 0 || temperature >= 10){
+		lcdDrawCircle(x + 39, y + 56, 2, COLOR_WHITE);
+		lcdDrawCircle(x + 39, y + 56, 3, COLOR_WHITE);
+	}
+	else {
+		lcdDrawCircle(x + 28, y + 56, 2, COLOR_WHITE);
+		lcdDrawCircle(x + 28, y + 56, 3, COLOR_WHITE);
+	}
 	lcdSetCursor(x + 90, y + 55);
 	lcdPrintf("%d%%", (int)humidity);
 }
@@ -949,6 +953,9 @@ void DrawIconOk(int x , int y){
 }
 void DrawBackGround(int x , int y){
 	lcdDrawImage(x, y, &bmCity);
+}
+void DrawConfirm(int x , int y){
+	lcdDrawImage(x, y, &bmconfirm);
 }
 void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] , int day_code , char date[]){
 	  lcdSetCursor(x + 7 , y - 6);
@@ -1061,7 +1068,7 @@ void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , in
 	TextDate(5, 40 , current_date);
 	TextLocation(5, 55 , choice);
 	DrawCloud (3 , 80);
-	TextUV(5 , 160 , 1.2);
+//	TextUV(5 , 160 , 1.2);
 
 	// Ve icon nhiet do va hien thi nhiet do
 	DrawThermometer(95, 80 , 40, 12, 25, COLOR_BLACK, COLOR_RED);
@@ -1142,17 +1149,13 @@ void Screen3(int choice)
 {
 	DrawBackGround(0, 0);
 	lcdSetTextFont(&Font24);
-	lcdFillRoundRect(35,3, 170, 27, 13  , COLOR_THEME_SKYBLUE_BASE);
-	lcdDrawRoundRect(35,3, 170, 28, 13  , COLOR_BLACK);
-	lcdSetCursor(52, 6);
+	lcdFillRoundRect(35,6, 170, 27, 13  , COLOR_THEME_SKYBLUE_BASE);
+	lcdDrawRoundRect(35,6, 170, 28, 13  , COLOR_BLACK);
+	lcdSetCursor(52, 9);
 
 	lcdSetTextColor(COLOR_WHITE, COLOR_THEME_SKYBLUE_BASE);
 	lcdPrintf("Location");
 
-	//
-//	lcdFillRoundRect(199, 27, 40, 39, 5, COLOR_THEME_SKYBLUE_BASE);
-//	lcdDrawRoundRect(199, 27, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
-//	DrawIconOk(202, 30);
 
 	lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
 	lcdFillRoundRect(20,95, 200, 35, 6, COLOR_LIGHTGREY);
@@ -1232,6 +1235,11 @@ void Screen3(int choice)
 		lcdSetCursor(25, 240);
 		lcdPrintf("Da Nang");
 	}
+
+	//
+	lcdFillRoundRect(100, 275, 40, 39, 5, COLOR_THEME_SKYBLUE_BASE);
+	lcdDrawRoundRect(100, 275, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
+	DrawIconOk(103, 278);
 }
 
 

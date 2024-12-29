@@ -63,5 +63,6 @@ extern GUI_CONST_STORAGE GUI_BITMAP bmlocation;
 extern GUI_CONST_STORAGE GUI_BITMAP bmBack;
 extern GUI_CONST_STORAGE GUI_BITMAP bmOK;
 extern GUI_CONST_STORAGE GUI_BITMAP bmCity;
+extern GUI_CONST_STORAGE GUI_BITMAP bmconfirm;
 
 #endif /* IMAGE_H_ */

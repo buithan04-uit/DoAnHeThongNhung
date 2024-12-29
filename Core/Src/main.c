@@ -57,7 +57,6 @@ uint8_t uart_rx_buffer[UART_BUFFER_SIZE];
 SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim2;
-TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
 
@@ -74,7 +73,6 @@ static void MX_FSMC_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM2_Init(void);
-static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 void processWeather(char *jsonString);
@@ -163,7 +161,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI2_Init();
   MX_TIM2_Init();
-  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   LCD_BL_ON();
   HAL_TIM_Base_Start_IT(&htim2);
@@ -324,51 +321,6 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
-
-}
-
-/**
-  * @brief TIM3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM3_Init(void)
-{
-
-  /* USER CODE BEGIN TIM3_Init 0 */
-
-  /* USER CODE END TIM3_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM3_Init 1 */
-
-  /* USER CODE END TIM3_Init 1 */
-  htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 65535;
-  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM3_Init 2 */
-
-  /* USER CODE END TIM3_Init 2 */
 
 }
 
@@ -784,7 +736,7 @@ void RunProgram(){
 		  choiceTmp=choice;
 	  }
 	  if (TouchGetCalibratedPoint(&tx, &ty)){
-		  if (tx >= 195 && tx <= 239 && ty >= 20 && ty <= 70){
+		  if (tx >= 100 && tx <= 140 && ty >= 275 && ty <= 315){
 			  current = 1;
 			  updated = true;
 			  HAL_Delay(100);
@@ -827,7 +779,7 @@ void RunProgram(){
 			  lcdPrintf("Da Nang");
 			  HAL_Delay(200);
 		  }
-		  if (tx >= 20 && tx <= 220 && ty >= 100 && ty <= 135){
+		  if (tx >= 20 && tx <= 220 && ty >= 95 && ty <= 130){
 			  choice = 2;
 			  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
 			  lcdDrawRoundRect(20,50, 200, 36, 6, COLOR_BLACK);
@@ -865,7 +817,7 @@ void RunProgram(){
 			  lcdPrintf("Da Nang");
 			  HAL_Delay(200);
 		  }
-		  if (tx >= 20 && tx <= 220 && ty >= 150 && ty <= 185){
+		  if (tx >= 20 && tx <= 220 && ty >= 140 && ty <= 175){
 			  choice = 3;
 			  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
 			  lcdDrawRoundRect(20,50, 200, 36, 6, COLOR_BLACK);
@@ -903,7 +855,7 @@ void RunProgram(){
 			  lcdPrintf("Da Nang");
 			  HAL_Delay(200);
 					  }
-		  if (tx >= 20 && tx <= 220 && ty >= 200 && ty <= 235){
+		  if (tx >= 20 && tx <= 220 && ty >= 185 && ty <= 220){
 			  choice = 4;
 			  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
 			  lcdDrawRoundRect(20,50, 200, 36, 6, COLOR_BLACK);
@@ -941,7 +893,7 @@ void RunProgram(){
 			  lcdPrintf("Da Nang");
 			  HAL_Delay(200);
 		  }
-		  if (tx >= 20 && tx <= 220 && ty >= 250 && ty <= 285){
+		  if (tx >= 20 && tx <= 220 && ty >= 230 && ty <= 265){
 			  choice = 5;
 			  lcdFillRoundRect(20,50, 200, 35, 6, COLOR_LIGHTGREY);
 			  lcdDrawRoundRect(20,50, 200, 36, 6, COLOR_BLACK);
