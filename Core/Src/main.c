@@ -93,6 +93,7 @@ float temperature = 1;
 float humidity = 1;
 volatile bool readDHT = false;
 volatile bool Recall = false;
+volatile bool Reload = false;
 int *temp_max = {0};
 int *temp_min = {0};
 double *UV = {0};
@@ -464,7 +465,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
     	if (count == 300){
     		//call API
-    		Recall = true;
+    		Reload = true;
     		count = 0;
     	}
     }
@@ -660,14 +661,16 @@ void processWeather( char *jsonString) {
 
         // Convert day index to day name
         char day[4];
-        switch ((i + 2) % 7) {
-            case 0: snprintf(day, sizeof(day), "Sun"); break;
-            case 1: snprintf(day, sizeof(day), "Mon"); break;
-            case 2: snprintf(day, sizeof(day), "Tue"); break;
-            case 3: snprintf(day, sizeof(day), "Wed"); break;
-            case 4: snprintf(day, sizeof(day), "Thu"); break;
-            case 5: snprintf(day, sizeof(day), "Fri"); break;
-            case 6: snprintf(day, sizeof(day), "Sat"); break;
+        int M;
+        M = FindDate(days, month, year);
+        switch (M) {
+            case 0: snprintf(day, sizeof(day), "Mon"); break;
+            case 1: snprintf(day, sizeof(day), "Tue"); break;
+            case 2: snprintf(day, sizeof(day), "Wed"); break;
+            case 3: snprintf(day, sizeof(day), "Thu"); break;
+            case 4: snprintf(day, sizeof(day), "Fri"); break;
+            case 5: snprintf(day, sizeof(day), "sat"); break;
+            case 6: snprintf(day, sizeof(day), "Sun"); break;
             default: break;
         }
         strncat(day_name[i], day, sizeof(day_name[i]) - strlen(day_name[i]) - 1);
@@ -698,15 +701,11 @@ void RunProgram(){
 		  updated = false;
 	  }
 	  if (TouchGetCalibratedPoint(&tx, &ty)){
-		  lcdDrawCircle(tx, ty, 2, COLOR_BLUE);
 		  if (tx >= 199 && tx <= 239 && ty >= 25 && ty <= 65){
 			  current = 2;
 			  updated = true;
 			  HAL_Delay(200);
 		  }
-	  }
-	  if (TouchGetCalibratedPoint(&tx, &ty)){
-		  lcdDrawCircle(tx, ty, 2, COLOR_BLUE);
 		  if (tx >= 158 && tx <= 198 && ty >= 25 && ty <= 65){
 			  current = 3;
 			  updated = true;
@@ -934,6 +933,7 @@ void RunProgram(){
 	  }
   }
   if(Recall){
+	  Screen0();
 	  Resend_AT_Commands(&huart1);
 	  processWeather(uart_rx_buffer);
 	  if (current == 1){
@@ -947,6 +947,20 @@ void RunProgram(){
 	  }
 	  Recall = false;
   }
+  if(Reload){
+  	  Resend_AT_Commands(&huart1);
+  	  processWeather(uart_rx_buffer);
+  	  if (current == 1){
+  		  Screen1(temp_max[0] , temp_min[0] , current_temp ,  current_humi , current_code ,current_cloud ,current_time ,current_date , choice);
+  	  }
+  	  if (current == 2){
+  		  Screen2(temp_max, temp_min, day_code, day_name, wind_speed, Date,current_time ,current_date ,choice);
+  	  }
+  	  if (current == 3){
+  		  Screen3(choice);
+  	  }
+  	  Reload = false;
+    }
 }
 
 /* USER CODE END 4 */

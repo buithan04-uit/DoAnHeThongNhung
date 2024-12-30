@@ -494,6 +494,42 @@ void TableMain (int16_t x, int16_t y ,int temperature , int huminity )
     	lcdDrawCircle( x + 123 , y + 37 , 2, COLOR_WHITE);
     }
 }
+int numDay(int date , int month , int year){
+	int sum = 0;
+	for (int i = 1 ; i < month ; i++){
+		if (i == 2){
+			if (CheckYear(year)){
+				sum += 29;
+			}
+			else sum += 28;
+		}
+		else if (i == 1 || i == 3 || i == 5 || i == 7 || i == 8 || i == 10 || i == 12){
+			sum += 31;
+		}
+		else if (i == 4 || i == 6 || i == 9 || i == 11){
+			sum += 30;
+		}
+	}
+	sum += date;
+}
+bool CheckYear(int year){
+	if (((year % 4)==0) && ((year % 100)!=0)){
+	  return true;
+	 }else if ((year % 400)==0){
+	  return true;
+	 }else {
+	  return false;
+	 }
+}
+int FindDate(int day , int month , int year){
+	int JMD;
+   JMD = (day + ((153 * (month + 12 * ((14 - month) / 12) - 3) + 2) / 5) +
+	 (365 * (year + 4800 - ((14 - month) / 12))) +
+	 ((year + 4800 - ((14 - month) / 12)) / 4) -
+	((year + 4800 - ((14 - month) / 12)) / 100) +
+	((year + 4800 - ((14 - month) / 12)) / 400)  - 32045) % 7;
+	 return JMD;
+}
 
 void lcdDrawThickArc(int x0, int y0, int r, int start_angle, int end_angle, int thickness, uint16_t color) {
     for (int t = 0; t < thickness; t++) {

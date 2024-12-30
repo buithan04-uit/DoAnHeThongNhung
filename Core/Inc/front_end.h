@@ -11,6 +11,7 @@
 #include "ili9341.h"
 #include "math.h"
 #include "DHT.h"
+#include "stdio.h"
 
 void demoLCD(int i);
 unsigned long testFillScreen();
@@ -71,7 +72,9 @@ void CloudSun (int x, int y);
 void CloudMoon (int x, int y);
 void CloudThunder (int x, int y);
 
-
+int FindDate(int day , int month , int year);
+int numDay(int date , int month, int year);
+bool CheckYear(int year);
 void lcdDrawThickArc(int x0, int y0, int r, int start_angle, int end_angle, int thickness, uint16_t color);
 void DrawClock (int x0, int y0, int r, int start_angle, int end_angle, int thickness);
 void DrawCloud(int x , int y);
