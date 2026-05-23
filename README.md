@@ -4,9 +4,9 @@ A real-time embedded weather dashboard that combines WiFi API data with local se
 
 ## Demo Video
 
-<video src="https://github.com/buithan04-uit/DoAnHeThongNhung/raw/master/WeatherFinal.mp4" controls width="800"></video>
+[![Demo video](assets/demo-thumbnail.png)](https://drive.google.com/file/d/1N4ox5w5L0RqcsW07mxu-sv_Fd5rLsJkf/view?usp=drive_link)
 
-If the video does not render, open it here: https://github.com/buithan04-uit/DoAnHeThongNhung/raw/master/WeatherFinal.mp4
+Click the image to open the demo video on Google Drive.
 
 ## Highlights (Recruiter-Friendly)
 
