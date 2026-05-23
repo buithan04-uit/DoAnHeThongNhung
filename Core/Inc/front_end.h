@@ -66,6 +66,7 @@ void DrawIconBack(int x , int y);
 void DrawIconOk(int x , int y);
 void DrawBackGround(int x , int y);
 void DrawConfirm(int x , int y);
+void DrawNameIcon(int x , int y);
 
 void CloudRain (int x, int y);
 void CloudSun (int x, int y);

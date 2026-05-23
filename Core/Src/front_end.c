@@ -993,6 +993,9 @@ void DrawBackGround(int x , int y){
 void DrawConfirm(int x , int y){
 	lcdDrawImage(x, y, &bmconfirm);
 }
+void DrawNameIcon(int x , int y){
+	lcdDrawImage(x, y, &bmabc);
+}
 void OneDay(int x , int y, int MinTem , int MaxTem , int wind , char day_name[] , int day_code , char date[]){
 	  lcdSetCursor(x + 7 , y - 6);
 	  lcdSetTextFont(&Font12);
@@ -1070,11 +1073,8 @@ void Screen0(){
 	lcdDrawImage(60, 100, &bmLoading);
 }
 void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , int current_code , int current_cloud , char * current_time , char * current_date , int choice){
-
-
 	lcdFillRGB(COLOR_THEME_SKYBLUE_BASE);
 	// Divide layout
-
 	lcdDrawRoundRect(158, 25, 40, 40, 5, COLOR_THEME_SKYBLUE_SHADOW);
 	DrawIconLocation(161, 28);
 
@@ -1086,7 +1086,6 @@ void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , in
 	lcdDrawRoundRect(1, 70, 73, 110, 6, COLOR_THEME_SKYBLUE_SHADOW);
 
 	lcdDrawRoundRect(1, 187, 238, 50, 6, COLOR_THEME_SKYBLUE_SHADOW);
-
 
 
 	lcdDrawRoundRect(1, 240, 150, 78, 6, COLOR_THEME_SKYBLUE_SHADOW);
@@ -1104,7 +1103,7 @@ void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , in
 	TextDate(5, 40 , current_date);
 	TextLocation(5, 55 , choice);
 	DrawCloud (3 , 80);
-//	TextUV(5 , 160 , 1.2);
+	TextUV(5 , 160 , 1.2);
 
 	// Ve icon nhiet do va hien thi nhiet do
 	DrawThermometer(95, 80 , 40, 12, 25, COLOR_BLACK, COLOR_RED);
@@ -1135,9 +1134,6 @@ void Screen1(int TempMax , int TempMin , int current_temp ,int current_humi , in
 	DrawIconClockTem(14 , 265);
 	DrawIconClockHumi(88, 265);
 	DrawIconCloudRate(170, 265);
-
-
-
 }
 
 void Screen2(int Max_temp[] , int Min_temp[] , int day_code[] , char day_name[][4] , int Wind_speed[] , char date [][6] , char * current_time , char * current_date , int choice){

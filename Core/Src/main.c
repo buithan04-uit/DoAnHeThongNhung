@@ -76,6 +76,7 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 void processWeather(char *jsonString);
+
 void UART_ReceiveString(UART_HandleTypeDef *huart, char *buffer, int buffer_size);
 void Send_AT_Commands(UART_HandleTypeDef *huart);
 void Resend_AT_Commands(UART_HandleTypeDef *huart);
@@ -172,16 +173,8 @@ int main(void)
 
   lcdSetOrientation(i%4);
   lcdFillRGB(COLOR_BLACK);
-//  while (1){
-//	  Screen3(choice);
-//	  HAL_Delay(10000);
-//  }
-
   Send_AT_Commands(&huart1);
-
-
   processWeather(uart_rx_buffer);
-
 
   /* USER CODE END 2 */
 
@@ -502,7 +495,7 @@ void Send_AT_Commands(UART_HandleTypeDef *huart) {
 
     Send_AT_Command(huart, "AT\r\n", 3000 );
     Send_AT_Command(huart, "AT+CWMODE=3\r\n", 3000 );
-    Send_AT_Command(huart, "AT+CWJAP=\"RedmiTurbo3\",\"88888888\"\r\n", 9000 );
+    Send_AT_Command(huart, "AT+CWJAP=\"Redmi Turbo 3\",\"88888888\"\r\n", 9000 );
     Send_AT_Command(huart, "AT+CIPSTART=\"TCP\",\"api.open-meteo.com\",80\r\n", 3000 );
     Send_AT_Command(huart, "AT+CIPSEND=299\r\n", 3000);
 
@@ -601,10 +594,6 @@ void processWeather( char *jsonString) {
     cJSON *uv_json = cJSON_GetObjectItem(daily, "uv_index_max");
     cJSON *weather_code = cJSON_GetObjectItem(daily, "weather_code");
     cJSON *wind_speed_json = cJSON_GetObjectItem(daily, "wind_speed_10m_max");
-
-    //"time":"2024-12-24T17:30","interval":900,"temperature_2m":26.0,"relative_humidity_2m":65,"weather_code":3,"cloud_cover":98};
-
-
 
     char * Tmp =  cJSON_GetObjectItem(current , "time")->valuestring;
     int year, month, day, hour , minute;

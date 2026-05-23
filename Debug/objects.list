@@ -10,6 +10,7 @@
 "./Core/Src/OK.o"
 "./Core/Src/STLogo.o"
 "./Core/Src/Tem.o"
+"./Core/Src/abc.o"
 "./Core/Src/cJSON.o"
 "./Core/Src/calibrate.o"
 "./Core/Src/clockhumi.o"
