@@ -1,14 +1,25 @@
+<div align="center">
+
 # Embedded Weather Display System (STM32 + ESP8266)
+
+![STM32](https://img.shields.io/badge/MCU-STM32-0066CC?style=for-the-badge&logo=stmicroelectronics&logoColor=white)
+![ESP8266](https://img.shields.io/badge/WiFi-ESP8266-0A84FF?style=for-the-badge&logo=espressif&logoColor=white)
+![C](https://img.shields.io/badge/Language-C-00599C?style=for-the-badge&logo=c&logoColor=white)
+![UART](https://img.shields.io/badge/Interface-UART-3B82F6?style=for-the-badge)
+![SPI](https://img.shields.io/badge/Interface-SPI-22C55E?style=for-the-badge)
+![FSMC](https://img.shields.io/badge/Interface-FSMC-F97316?style=for-the-badge)
+
+</div>
 
 A real-time embedded weather dashboard that combines WiFi API data with local sensor readings and presents it on a touchscreen LCD. Designed as a complete embedded system demo for UI, connectivity, and sensor integration.
 
-## Demo Video
+## 🎬 Demo Video
 
 [![Demo video](assets/demo-thumbnail.png)](https://drive.google.com/file/d/1N4ox5w5L0RqcsW07mxu-sv_Fd5rLsJkf/view?usp=drive_link)
 
 Click the image to open the demo video on Google Drive.
 
-## Highlights (Recruiter-Friendly)
+## ✨ Highlights (Recruiter-Friendly)
 
 - Real-time weather data from Open-Meteo API via ESP8266 (UART + AT commands)
 - Touchscreen UI with 3 screens: current weather, 6-day forecast, and location selection
@@ -16,7 +27,7 @@ Click the image to open the demo video on Google Drive.
 - Local DHT sensor integration for temperature and humidity
 - JSON parsing with cJSON for reliable data extraction
 
-## Platform and Tech
+## 🧩 Platform and Tech
 
 - MCU: STM32 (STM32F4 series)
 - WiFi module: ESP8266
@@ -25,7 +36,7 @@ Click the image to open the demo video on Google Drive.
 - Interfaces: UART, SPI, FSMC, GPIO
 - Language: C (STM32 HAL)
 
-## UI Screens
+## 🖥️ UI Screens
 
 1. Current Weather
    - Temperature, humidity, weather code, cloud cover, date/time
@@ -34,28 +45,28 @@ Click the image to open the demo video on Google Drive.
 3. Location Selection
    - 5 cities: Ho Chi Minh, Ha Noi, Hai Phong, Can Tho, Da Nang
 
-## How It Works (System Flow)
+## ⚙️ How It Works (System Flow)
 
 - ESP8266 connects to WiFi and calls Open-Meteo API via HTTP GET.
 - The STM32 receives the response through UART and parses JSON payloads.
 - Parsed values are stored in global variables and the UI is redrawn when new data arrives.
 - Touch input updates the current screen and selected city, triggering a new API request.
 
-## Architecture (At a Glance)
+## 🧠 Architecture (At a Glance)
 
 - ESP8266 handles WiFi + HTTP, sends JSON to STM32 via UART
 - STM32 parses JSON, updates UI, and reads local DHT sensor
 - LCD is driven by FSMC/SPI; touch input controls screen navigation
 - Timer triggers periodic API refresh (default: 5 minutes)
 
-## Project Structure
+## 🗂️ Project Structure
 
 - Core/Inc, Core/Src: main application, UI, sensors, drivers
 - Drivers: STM32 HAL and CMSIS
 - Startup: linker/startup scripts
 - Debug: build outputs
 
-## Testing Summary
+## ✅ Testing Summary
 
 - WiFi connection and API requests: Pass
 - Weather data reception via UART: Pass
@@ -63,18 +74,18 @@ Click the image to open the demo video on Google Drive.
 - DHT sensor readings: Pass
 - City selection and data refresh: Pass
 
-## Limitations
+## ⚠️ Limitations
 
 - No robust recovery if ESP8266 disconnects during runtime
 - Some UI redraws can be affected by delays in blocking calls
 
-## Possible Improvements
+## 🚀 Possible Improvements
 
 - Add reconnection and retry logic for WiFi/API failures
 - Replace blocking delays with a non-blocking scheduler
 - Add caching to avoid redundant redraws
 
-## Reference Links
+## 🔗 Reference Links
 
 - Open-Meteo API: https://open-meteo.com/
 - DHT HAL driver: https://github.com/quen0n/DHT11-DHT22-STM32-HAL
